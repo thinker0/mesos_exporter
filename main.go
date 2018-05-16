@@ -49,7 +49,7 @@ func getX509CertPool(pemFiles []string) *x509.CertPool {
 	return pool
 }
 
-func mkHTTPClient(url string, timeout time.Duration, auth authInfo, certPool *x509.CertPool) *httpClient {
+func mkHTTPClient(hostname string, url string, timeout time.Duration, auth authInfo, certPool *x509.CertPool) *httpClient {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{RootCAs: certPool, InsecureSkipVerify: auth.skipSSLVerify},
 	}
@@ -67,6 +67,7 @@ func mkHTTPClient(url string, timeout time.Duration, auth authInfo, certPool *x5
 
 	client := &httpClient{
 		http.Client{Timeout: timeout, Transport: transport, CheckRedirect: redirectFunc},
+		hostname,
 		url,
 		auth,
 	}
@@ -117,11 +118,11 @@ func csvInputToList(input string) []string {
 	return entryList
 }
 
-func agentsDiscover(masterUrl string) ([]string, error) {
-	log.Infof("discovering slaves... %s", masterUrl)
+func agentsDiscover(masterURL string) ([]string, error) {
+	log.Infof("discovering slaves... %s", masterURL)
 
 	// This will redirect us to the elected mesos master
-	redirectURL := fmt.Sprintf("%s/master/redirect", masterUrl)
+	redirectURL := fmt.Sprintf("%s/master/redirect", masterURL)
 	rReq, err := http.NewRequest("GET", redirectURL, nil)
 	if err != nil {
 		panic(err)
@@ -262,13 +263,19 @@ func main() {
 
 	switch {
 	case *masterURL != "":
+		hostname, err := os.Hostname()
+		if err != nil {
+			log.Fatal("Unable to get the hostname of this machine")
+		}
 		for _, f := range []func(*httpClient) prometheus.Collector{
-			newMasterCollector,
+			func(c *httpClient) prometheus.Collector {
+				return newMasterCollector(c, hostname)
+			},
 			func(c *httpClient) prometheus.Collector {
 				return newMasterStateCollector(c, slaveAttributeLabels)
 			},
 		} {
-			c := f(mkHTTPClient(*masterURL, *timeout, auth, certPool))
+			c := f(mkHTTPClient(hostname, *masterURL, *timeout, auth, certPool))
 			if err := prometheus.Register(c); err != nil {
 				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
@@ -279,10 +286,10 @@ func main() {
 
 		slaveCollectors := []func(*httpClient) prometheus.Collector{
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveCollector(c)
+				return newSlaveCollector(c, c.hostname)
 			},
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveMonitorCollector(c)
+				return newSlaveMonitorCollector(c, c.hostname)
 			},
 			func(c *httpClient) prometheus.Collector {
 				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
@@ -296,7 +303,7 @@ func main() {
 		for _, f := range slaveCollectors {
 			for _, agent := range agentUrls {
 				log.Infof("Host: %s", agent)
-				c := f(mkHTTPClient(agent, *timeout, auth, certPool))
+				c := f(mkHTTPClient(hostname, agent, *timeout, auth, certPool))
 				if err := prometheus.Register(c); err != nil {
 					log.WithField("error", err).Fatal("Prometheus Register() error")
 				}
@@ -304,15 +311,17 @@ func main() {
 		}
 		log.WithField("address", *addr).Info("Exposing slave metrics")
 
-
-
 	case *slaveURL != "":
+		hostname, err := os.Hostname()
+		if err != nil {
+			log.Fatal("Unable to get the hostname of this machine")
+		}
 		slaveCollectors := []func(*httpClient) prometheus.Collector{
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveCollector(c)
+				return newSlaveCollector(c, hostname)
 			},
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveMonitorCollector(c)
+				return newSlaveMonitorCollector(c, c.hostname)
 			},
 			func(c *httpClient) prometheus.Collector {
 				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
@@ -320,7 +329,7 @@ func main() {
 		}
 
 		for _, f := range slaveCollectors {
-			c := f(mkHTTPClient(*slaveURL, *timeout, auth, certPool))
+			c := f(mkHTTPClient(hostname, *slaveURL, *timeout, auth, certPool))
 			if err := prometheus.Register(c); err != nil {
 				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
@@ -340,6 +349,9 @@ func main() {
             <p><a href="/metrics">Metrics</a></p>
             </body>
             </html>`))
+	})
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
 	})
 	http.Handle("/metrics", promhttp.Handler())
 	if err := http.ListenAndServe(*addr, nil); err != nil {

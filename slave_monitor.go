@@ -62,7 +62,7 @@ type (
 	}
 )
 
-func newSlaveMonitorCollector(httpClient *httpClient) prometheus.Collector {
+func newSlaveMonitorCollector(httpClient *httpClient, hostname string) prometheus.Collector {
 	labels := []string{"id", "framework_id", "source"}
 
 	return &slaveCollector{
