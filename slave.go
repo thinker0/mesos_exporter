@@ -8,10 +8,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
+func newSlaveCollector(httpClient *httpClient, hostname string) prometheus.Collector {
 	metrics := map[prometheus.Collector]func(metricMap, prometheus.Collector) error{
 		// CPU/Disk/Mem resources in free/used
-		gauge("slave", "cpus", "Current CPU resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "cpus", "Current CPU resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/cpus_percent"]
 			if !ok {
 				log.WithField("metric", "slave/cpus_percent").Warn(LogErrNotFoundInMap)
@@ -24,13 +24,13 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/cpus_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
-		gauge("slave", "cpus_revocable", "Current revocable CPU resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "cpus_revocable", "Current revocable CPU resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/cpus_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/cpus_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -43,13 +43,13 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/cpus_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
-		gauge("slave", "mem", "Current memory resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "mem", "Current memory resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/mem_percent"]
 			if !ok {
 				log.WithField("metric", "slave/mem_percent").Warn(LogErrNotFoundInMap)
@@ -62,13 +62,13 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/mem_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
-		gauge("slave", "mem_revocable", "Current revocable memory resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "mem_revocable", "Current revocable memory resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/mem_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/mem_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -81,13 +81,13 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/mem_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
-		gauge("slave", "gpus", "Current GPU resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "gpus", "Current GPU resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/gpus_percent"]
 			if !ok {
 				log.WithField("metric", "slave/gpus_percent").Warn(LogErrNotFoundInMap)
@@ -100,13 +100,13 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/gpus_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
-		gauge("slave", "gpus_revocable", "Current revocable GPUS resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "gpus_revocable", "Current revocable GPUS resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/gpus_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/gpus_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -119,13 +119,13 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/gpus_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
-		gauge("slave", "disk", "Current disk resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "disk", "Current disk resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/disk_percent"]
 			if !ok {
 				log.WithField("metric", "slave/disk_percent").Warn(LogErrNotFoundInMap)
@@ -138,13 +138,13 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/disk_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
-		gauge("slave", "disk_revocable", "Current disk resources in cluster.", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "disk_revocable", "Current disk resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/disk_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/disk_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -157,10 +157,10 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/disk_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("percent").Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
 			return nil
 		},
 
@@ -242,9 +242,9 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "slave/executors_terminating").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("registering").Set(registering)
-			c.(*prometheus.GaugeVec).WithLabelValues("running").Set(running)
-			c.(*prometheus.GaugeVec).WithLabelValues("terminating").Set(terminating)
+			c.(*prometheus.GaugeVec).WithLabelValues("registering", hostname).Set(registering)
+			c.(*prometheus.GaugeVec).WithLabelValues("running", hostname).Set(running)
+			c.(*prometheus.GaugeVec).WithLabelValues("terminating", hostname).Set(terminating)
 			return nil
 		},
 		prometheus.NewGauge(prometheus.GaugeOpts{
@@ -496,7 +496,7 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 
 			return nil
 		},
-		gauge("slave", "containerizer_fetcher_cache_size", "Containerizer fetcher cache sizes in bytes", "type"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "containerizer_fetcher_cache_size", "Containerizer fetcher cache sizes in bytes", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			total, ok := m["containerizer/fetcher/cache_size_total_bytes"]
 			if !ok {
 				log.WithField("metric", "containerizer/fetcher/cache_size_total_bytes").Warn(LogErrNotFoundInMap)
@@ -505,9 +505,9 @@ func newSlaveCollector(httpClient *httpClient) prometheus.Collector {
 			if !ok {
 				log.WithField("metric", "containerizer/fetcher/cache_size_used_bytes").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("total").Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues("used").Set(used)
-			c.(*prometheus.GaugeVec).WithLabelValues("free").Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues("used", hostname).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues("free", hostname).Set(total - used)
 			return nil
 		},
 
