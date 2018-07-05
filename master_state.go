@@ -12,6 +12,8 @@ import (
 
 type (
 	slave struct {
+		Active     bool
+		Hostname   string
 		PID        string                     `json:"pid"`
 		Used       resources                  `json:"used_resources"`
 		Unreserved resources                  `json:"unreserved_resources"`
