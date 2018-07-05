@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	log "github.com/sirupsen/logrus"
+	"net"
 )
 
 var errorCounter = prometheus.NewCounter(prometheus.CounterOpts{
@@ -140,11 +141,85 @@ func csvInputToList(input string) []string {
 	return entryList
 }
 
+func agentsDiscover(masterUrl string) ([]string, error) {
+	log.Infof("discovering slaves... %s", masterUrl)
+
+	// This will redirect us to the elected mesos master
+	redirectURL := fmt.Sprintf("%s/master/redirect", masterUrl)
+	rReq, err := http.NewRequest("GET", redirectURL, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	tr := http.Transport{
+		DisableKeepAlives: true,
+	}
+	rresp, err := tr.RoundTrip(rReq)
+	if err != nil {
+		log.WithField("discover", rReq).Error(err)
+		return nil, err
+	}
+	defer rresp.Body.Close()
+
+	// This will/should return http://master.ip:5050
+	masterLoc := rresp.Header.Get("Location")
+	if masterLoc == "" {
+		log.Warnf("%d response missing Location header", rresp.StatusCode)
+		return nil, err
+	}
+
+	log.Infof("current elected master at: %s", masterLoc)
+
+	// Starting from 0.23.0, a Mesos Master does not set the scheme in the "Location" header.
+	// Use the scheme from the master URL in this case.
+	var stateURL string
+	if strings.HasPrefix(masterLoc, "http") {
+		stateURL = fmt.Sprintf("%s/master/state", masterLoc)
+	} else {
+		stateURL = fmt.Sprintf("%s:%s/master/state", "http", masterLoc)
+	}
+
+	var state state
+
+	log.Infof("current master at: %s", stateURL)
+
+	resp, err := http.Get(stateURL)
+	if err != nil {
+		log.WithField("discover", stateURL).Error(err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Find all active slaves
+	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
+		log.Warn(err)
+		return nil, err
+	}
+
+	var slaveURLs []string
+	for _, slave := range state.Slaves {
+		if slave.Active {
+			// Extract slave port from pid
+			_, port, err := net.SplitHostPort(slave.PID)
+			if err != nil {
+				port = "5051"
+			}
+			url := fmt.Sprintf("http://%s:%s", slave.Hostname, port)
+
+			slaveURLs = append(slaveURLs, url)
+		}
+	}
+
+	log.Infof("%d slaves discovered", len(slaveURLs))
+	return slaveURLs, nil
+}
+
 func main() {
 	fs := flag.NewFlagSet("mesos-exporter", flag.ExitOnError)
 	addr := fs.String("addr", ":9105", "Address to listen on")
 	masterURL := fs.String("master", "", "Expose metrics from master running on this URL")
 	slaveURL := fs.String("slave", "", "Expose metrics from slave running on this URL")
+	//discoverMode := flag.String("discover", "discover", "The mode in which to run the exporter: 'discover'.")
 	timeout := fs.Duration("timeout", 10*time.Second, "Master polling timeout")
 	exportedTaskLabels := fs.String("exportedTaskLabels", "", "Comma-separated list of task labels to include in the corresponding metric")
 	exportedSlaveAttributes := fs.String("exportedSlaveAttributes", "", "Comma-separated list of slave attributes to include in the corresponding metric")
@@ -160,6 +235,7 @@ func main() {
 	skipSSLVerify := fs.Bool("skipSSLVerify", false, "Skip SSL certificate verification")
 	vers := fs.Bool("version", false, "Show version")
 	enableMasterState := fs.Bool("enableMasterState", true, "Enable collection from the master's /state endpoint")
+	// scrapeInterval := flag.Duration("scrap.interval", 60*time.Second, "Scrape interval duration")
 
 	fs.Parse(os.Args[1:])
 
@@ -247,6 +323,35 @@ func main() {
 				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
 		}
+
+		log.Info("Exporter Mode")
+
+		slaveCollectors := []func(*httpClient) prometheus.Collector{
+			func(c *httpClient) prometheus.Collector {
+				return newSlaveCollector(c)
+			},
+			func(c *httpClient) prometheus.Collector {
+				return newSlaveMonitorCollector(c)
+			},
+			func(c *httpClient) prometheus.Collector {
+				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
+			},
+		}
+
+		agentUrls, err := agentsDiscover(*masterURL)
+		if err != nil {
+			log.Warn("could not parse master/agents: ", err)
+		}
+		for _, f := range slaveCollectors {
+			for _, agent := range agentUrls {
+				log.Infof("Host: %s", agent)
+				c := f(mkHTTPClient(agent, *timeout, auth, certPool, certs))
+				if err := prometheus.Register(c); err != nil {
+					log.WithField("error", err).Fatal("Prometheus Register() error")
+				}
+			}
+		}
+		log.WithField("address", *addr).Info("Exposing slave metrics")
 
 	case *slaveURL != "":
 		log.WithField("address", *addr).Info("Exposing slave metrics")
