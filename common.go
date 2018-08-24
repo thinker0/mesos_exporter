@@ -158,7 +158,7 @@ type authInfo struct {
 
 type httpClient struct {
 	http.Client
-	hostname string
+	hostname  string
 	url       string
 	auth      authInfo
 	userAgent string
