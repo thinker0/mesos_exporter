@@ -33,12 +33,12 @@ type (
 	}
 
 	masterCollector struct {
-		*httpClient
+		httpClients	[]*httpClient
 		metrics map[prometheus.Collector]func(*state, prometheus.Collector)
 	}
 )
 
-func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []string) prometheus.Collector {
+func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []string) prometheus.Collector {
 	labels := []string{"slave"}
 	metrics := map[prometheus.Collector]func(*state, prometheus.Collector){
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -194,19 +194,20 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 	}
 
 	return &masterCollector{
-		httpClient: httpClient,
+		httpClients: httpClient,
 		metrics:    metrics,
 	}
 }
 
 func (c *masterCollector) Collect(ch chan<- prometheus.Metric) {
-	var s state
-	log.WithField("url", "/state").Debug("fetching URL")
-	c.fetchAndDecode("/state", &s)
-
-	for c, set := range c.metrics {
-		set(&s, c)
-		c.Collect(ch)
+	for _, httpClient := range c.httpClients {
+		var s state
+		log.WithField("url", "/state").Debug("fetching URL")
+		httpClient.fetchAndDecode("/state", &s)
+		for c, set := range c.metrics {
+			set(&s, c)
+			c.Collect(ch)
+		}
 	}
 }
 
