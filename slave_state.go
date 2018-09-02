@@ -28,8 +28,8 @@ type (
 	}
 
 	slaveStateCollector struct {
-		*httpClient
-		metrics map[*prometheus.Desc]slaveMetric
+		httpClients []*httpClient
+		metrics     map[*prometheus.Desc]slaveMetric
 	}
 	slaveMetric struct {
 		valueType prometheus.ValueType
@@ -41,8 +41,8 @@ type (
 	}
 )
 
-func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
-	c := slaveStateCollector{httpClient, make(map[*prometheus.Desc]slaveMetric)}
+func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
+	c := slaveStateCollector{httpClients, make(map[*prometheus.Desc]slaveMetric)}
 
 	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name", "hostname"}
 	normalisedUserTaskLabelList := normaliseLabelList(userTaskLabelList)
@@ -65,7 +65,7 @@ func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, 
 							"executor_id":  e.ID,
 							"task_id":      t.ID,
 							"task_name":    t.Name,
-							"hostname":		httpClient.hostname,
+							"hostname":     "",
 						}
 
 						// User labels
@@ -119,13 +119,15 @@ func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, 
 }
 
 func (c *slaveStateCollector) Collect(ch chan<- prometheus.Metric) {
-	var s slaveState
-	log.WithField("url", "/slave(1)/state").Debug("fetching URL")
-	c.fetchAndDecode("/slave(1)/state", &s)
-	for d, cm := range c.metrics {
-		for _, m := range cm.value(&s) {
-			log.Infof("%s -> %s", d, m.labels)
-			ch <- prometheus.MustNewConstMetric(d, cm.valueType, m.result, m.labels...)
+	for _, httpClient := range c.httpClients {
+		var s slaveState
+		log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+		httpClient.fetchAndDecode("/slave(1)/state", &s)
+		for d, cm := range c.metrics {
+			for _, m := range cm.value(&s) {
+				// log.Infof("%s -> %s", d, m.labels)
+				ch <- prometheus.MustNewConstMetric(d, cm.valueType, m.result, m.labels...)
+			}
 		}
 	}
 }

@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -143,7 +145,7 @@ func csvInputToList(input string) []string {
 	return entryList
 }
 
-func agentsDiscover(masterURL string) ([]string, error) {
+func agentsDiscover(masterURL string, timeout time.Duration, auth authInfo, certPool *x509.CertPool, certs []tls.Certificate) ([]*httpClient, error) {
 	log.Infof("discovering slaves... %s", masterURL)
 
 	// This will redirect us to the elected mesos master
@@ -192,13 +194,22 @@ func agentsDiscover(masterURL string) ([]string, error) {
 	}
 	defer resp.Body.Close()
 
+	var reader io.ReadCloser
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		reader, err = gzip.NewReader(resp.Body)
+		defer reader.Close()
+	default:
+		reader = resp.Body
+	}
+
 	// Find all active slaves
-	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
+	if err := json.NewDecoder(reader).Decode(&state); err != nil {
 		log.Warn(err)
 		return nil, err
 	}
 
-	var slaveURLs []string
+	var slaveURLs []*httpClient
 	for _, slave := range state.Slaves {
 		if slave.Active {
 			// Extract slave port from pid
@@ -206,9 +217,13 @@ func agentsDiscover(masterURL string) ([]string, error) {
 			if err != nil {
 				port = "5051"
 			}
-			url := fmt.Sprintf("http://%s:%s", slave.Hostname, port)
-
-			slaveURLs = append(slaveURLs, url)
+			agentUrl := fmt.Sprintf("http://%s:%s", slave.Hostname, port)
+			u, err := url.Parse(agentUrl)
+			if err != nil {
+				log.Fatal(err)
+			}
+			client := mkHTTPClient(u.Hostname(), agentUrl, timeout, auth, certPool, certs)
+			slaveURLs = append(slaveURLs, client)
 		}
 	}
 
@@ -313,34 +328,26 @@ func main() {
 	case *discoverURL != "":
 		log.Info("Exporter Mode")
 
-		slaveCollectors := []func(*httpClient) prometheus.Collector{
-			func(c *httpClient) prometheus.Collector {
-				return newSlaveCollector(c, c.hostname)
+		slaveCollectors := []func([]*httpClient) prometheus.Collector{
+			func(c []*httpClient) prometheus.Collector {
+				return newSlaveCollector(c)
 			},
-			func(c *httpClient) prometheus.Collector {
+			func(c []*httpClient) prometheus.Collector {
 				return newSlaveMonitorCollector(c)
 			},
-			func(c *httpClient) prometheus.Collector {
+			func(c []*httpClient) prometheus.Collector {
 				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
 			},
 		}
 
-		agentUrls, err := agentsDiscover(*discoverURL)
+		agentUrls, err := agentsDiscover(*discoverURL, *timeout, auth, certPool, certs)
 		if err != nil {
 			log.Warn("could not parse master/agents: ", err)
 		}
 		for _, f := range slaveCollectors {
-			for _, agent := range agentUrls {
-				// log.Infof("Host: %s", agent)
-				u, err := url.Parse(agent)
-				if err != nil {
-					log.Fatal(err)
-				}
-				c := f(mkHTTPClient(u.Hostname(), agent, *timeout, auth, certPool, certs))
-				if err := prometheus.Register(c); err != nil {
-					// log.Infof("Register: %s %s", agent, err.Error())
-					// log.WithField("error", err).Fatal("Prometheus Register() error")
-				}
+			c := f(agentUrls)
+			if err := prometheus.Register(c); err != nil {
+				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
 		}
 		log.WithField("address", *addr).Info("Exposing slave metrics")
@@ -349,17 +356,18 @@ func main() {
 		log.WithField("address", *addr).Info("Exposing master metrics")
 
 		hostname, err := os.Hostname()
+		httpClients := []*httpClient{mkHTTPClient(hostname, *slaveURL, *timeout, auth, certPool, certs)}
 		if err != nil {
 			log.Fatal("Unable to get the hostname of this machine")
 		}
 		if err := prometheus.Register(
-			newMasterCollector(mkHTTPClient(hostname, *masterURL, *timeout, auth, certPool, certs), hostname)); err != nil {
+			newMasterCollector(httpClients, hostname)); err != nil {
 			log.WithField("error", err).Fatal("Prometheus Register() error")
 		}
 
 		if *enableMasterState {
 			if err := prometheus.Register(
-				newMasterStateCollector(mkHTTPClient(hostname, *masterURL, *timeout, auth, certPool, certs), slaveAttributeLabels)); err != nil {
+				newMasterStateCollector(httpClients, slaveAttributeLabels)); err != nil {
 				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
 		}
@@ -370,21 +378,21 @@ func main() {
 		if err != nil {
 			log.Fatal("Unable to get the hostname of this machine")
 		}
-		slaveCollectors := []func(*httpClient) prometheus.Collector{
-			func(c *httpClient) prometheus.Collector {
-				return newSlaveCollector(c, hostname)
+		slaveCollectors := []func([]*httpClient) prometheus.Collector{
+			func(c []*httpClient) prometheus.Collector {
+				return newSlaveCollector(c)
 			},
-			func(c *httpClient) prometheus.Collector {
+			func(c []*httpClient) prometheus.Collector {
 				return newSlaveMonitorCollector(c)
 			},
-			func(c *httpClient) prometheus.Collector {
+			func(c []*httpClient) prometheus.Collector {
 				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
 			},
 		}
 
+		httpClients := []*httpClient{mkHTTPClient(hostname, *slaveURL, *timeout, auth, certPool, certs)}
 		for _, f := range slaveCollectors {
-			if err := prometheus.Register(
-				f(mkHTTPClient(hostname, *slaveURL, *timeout, auth, certPool, certs))); err != nil {
+			if err := prometheus.Register(f(httpClients)); err != nil {
 				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
 		}

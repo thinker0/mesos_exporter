@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func newMasterCollector(httpClient *httpClient, hostname string) prometheus.Collector {
+func newMasterCollector(httpClients []*httpClient, hostname string) prometheus.Collector {
 	metrics := map[prometheus.Collector]func(metricMap, prometheus.Collector) error{
 		// CPU/Disk/Mem resources in free/used
 		gauge("master", "cpus", "Current CPU resources in cluster.", "type", "hostname"): func(m metricMap, c prometheus.Collector) error {
@@ -1375,5 +1375,5 @@ func newMasterCollector(httpClient *httpClient, hostname string) prometheus.Coll
 
 		// END
 	}
-	return newMetricCollector(httpClient, metrics)
+	return newMetricCollector(httpClients, metrics)
 }

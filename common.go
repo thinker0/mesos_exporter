@@ -167,11 +167,11 @@ type httpClient struct {
 }
 
 type metricCollector struct {
-	*httpClient
+	httpClients []*httpClient
 	metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error
 }
 
-func newMetricCollector(httpClient *httpClient, metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error) prometheus.Collector {
+func newMetricCollector(httpClient []*httpClient, metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error) prometheus.Collector {
 	return &metricCollector{httpClient, metrics}
 }
 
@@ -300,21 +300,24 @@ func (httpClient *httpClient) fetchAndDecode(endpoint string, target interface{}
 }
 
 func (c *metricCollector) Collect(ch chan<- prometheus.Metric) {
-	var m metricMap
-	log.WithField("url", "/metrics/snapshot").Debug("fetching URL")
-	c.fetchAndDecode("/metrics/snapshot", &m)
-	for cm, f := range c.metrics {
-		if err := f(m, cm); err != nil {
-			ch := make(chan *prometheus.Desc, 1)
-			log.WithFields(log.Fields{
-				"metric": <-ch,
-				"error":  err,
-			}).Error("Error extracting metric")
-			errorCounter.Inc()
-			continue
+	for _, httpClient := range c.httpClients {
+		var m metricMap
+		log.WithField("url", "/metrics/snapshot").Debug("fetching URL")
+		httpClient.fetchAndDecode("/metrics/snapshot", &m)
+		for cm, f := range c.metrics {
+			if err := f(m, cm); err != nil {
+				ch := make(chan *prometheus.Desc, 1)
+				log.WithFields(log.Fields{
+					"metric": <-ch,
+					"error":  err,
+				}).Error("Error extracting metric")
+				errorCounter.Inc()
+				continue
+			}
+			cm.Collect(ch)
 		}
-		cm.Collect(ch)
 	}
+
 }
 
 func (c *metricCollector) Describe(ch chan<- *prometheus.Desc) {
