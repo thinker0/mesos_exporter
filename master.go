@@ -393,7 +393,7 @@ func newMasterCollector(httpClient *httpClient, hostname string) prometheus.Coll
 			return nil
 		},
 
-		gauge("master", "task_states_current", "Current number of tasks by state.", "state"): func(m metricMap, c prometheus.Collector) error {
+		gauge("master", "task_states_current", "Current number of tasks by state.", "state", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			running, ok := m["master/tasks_running"]
 			if !ok {
 				log.WithField("metric", "master/tasks_running").Warn(LogErrNotFoundInMap)
@@ -416,11 +416,11 @@ func newMasterCollector(httpClient *httpClient, hostname string) prometheus.Coll
 				log.WithField("metric", "master/tasks_killing").Warn(LogErrNotFoundInMap)
 			}
 
-			c.(*settableCounterVec).Set(killing, "killing", hostname)
-			c.(*settableCounterVec).Set(running, "running", hostname)
-			c.(*settableCounterVec).Set(staging, "staging", hostname)
-			c.(*settableCounterVec).Set(starting, "starting", hostname)
-			c.(*settableCounterVec).Set(unreachable, "unreachable", hostname)
+			c.(*prometheus.GaugeVec).WithLabelValues("killing", hostname).Set(killing)
+			c.(*prometheus.GaugeVec).WithLabelValues("running", hostname).Set(running)
+			c.(*prometheus.GaugeVec).WithLabelValues("staging", hostname).Set(staging)
+			c.(*prometheus.GaugeVec).WithLabelValues("starting", hostname).Set(starting)
+			c.(*prometheus.GaugeVec).WithLabelValues("unreachable", hostname).Set(unreachable)
 
 			return nil
 		},

@@ -110,12 +110,12 @@ func (c *settableCounter) Set(value float64) {
 	c.value = prometheus.MustNewConstMetric(c.desc, prometheus.CounterValue, value)
 }
 
-func newSettableCounter(subsystem, name, help string) *settableCounter {
+func newSettableCounter(subsystem, name, help string, labels ...string) *settableCounter {
 	return &settableCounter{
 		desc: prometheus.NewDesc(
 			prometheus.BuildFQName("mesos", subsystem, name),
 			help,
-			nil,
+			labels,
 			prometheus.Labels{},
 		),
 	}
