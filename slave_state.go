@@ -13,6 +13,7 @@ import (
 
 type (
 	slaveState struct {
+		Hostname string
 		Attributes map[string]json.RawMessage `json:"attributes"`
 		Frameworks []slaveFramework           `json:"frameworks"`
 	}
@@ -65,7 +66,7 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 							"executor_id":  e.ID,
 							"task_id":      t.ID,
 							"task_name":    t.Name,
-							"hostname":     "",
+							"hostname":     st.Hostname,
 						}
 
 						// User labels
@@ -125,7 +126,7 @@ func (c *slaveStateCollector) Collect(ch chan<- prometheus.Metric) {
 		httpClient.fetchAndDecode("/slave(1)/state", &s)
 		for d, cm := range c.metrics {
 			for _, m := range cm.value(&s) {
-				// log.Infof("%s -> %s", d, m.labels)
+				// log.Debugf("%s -> %s", d, m.labels)
 				ch <- prometheus.MustNewConstMetric(d, cm.valueType, m.result, m.labels...)
 			}
 		}
