@@ -171,8 +171,8 @@ type metricCollector struct {
 	metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error
 }
 
-func newMetricCollector(httpClient []*httpClient, metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error) prometheus.Collector {
-	return &metricCollector{httpClient, metrics}
+func newMetricCollector(httpClients []*httpClient, metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error) prometheus.Collector {
+	return &metricCollector{httpClients, metrics}
 }
 
 func signingToken(httpClient *httpClient) string {
