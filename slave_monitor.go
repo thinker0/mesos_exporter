@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/log"
 )
 
 type (
@@ -240,6 +241,7 @@ func (c *slaveCollector) Collect(ch chan<- prometheus.Metric) {
 
 	for _, exec := range stats {
 		for desc, m := range c.metrics {
+			log.Infof("%s -> %s", desc, m.hostname)
 			ch <- prometheus.MustNewConstMetric(desc, m.valueType, m.get(exec.Statistics), exec.ID, exec.FrameworkID, exec.Source, m.hostname)
 		}
 	}

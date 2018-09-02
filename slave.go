@@ -319,7 +319,7 @@ func newSlaveCollector(httpClient *httpClient, hostname string) prometheus.Colle
 			return nil
 		},
 
-		counter("slave", "task_state_counts_by_source_reason", "Number of task states by source and reason", "state", "source", "reason"): func(m metricMap, c prometheus.Collector) error {
+		counter("slave", "task_state_counts_by_source_reason", "Number of task states by source and reason", "state", "source", "reason", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			re, err := regexp.Compile("slave/task_(.*?)/source_(.*?)/reason_(.*?)$")
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -337,7 +337,7 @@ func newSlaveCollector(httpClient *httpClient, hostname string) prometheus.Colle
 				state := matches[1]
 				source := matches[2]
 				reason := matches[3]
-				c.(*settableCounterVec).Set(value, state, source, reason)
+				c.(*settableCounterVec).Set(value, state, source, reason, hostname)
 			}
 			return nil
 		},
@@ -345,7 +345,7 @@ func newSlaveCollector(httpClient *httpClient, hostname string) prometheus.Colle
 		// Slave stats about messages
 		counter("slave", "messages_outcomes_total",
 			"Total number of messages by outcome of operation",
-			"type", "outcome"): func(m metricMap, c prometheus.Collector) error {
+			"type", "outcome", "hostname"): func(m metricMap, c prometheus.Collector) error {
 
 			frameworkMessagesValid, ok := m["slave/valid_framework_messages"]
 			if !ok {
@@ -363,10 +363,10 @@ func newSlaveCollector(httpClient *httpClient, hostname string) prometheus.Colle
 			if !ok {
 				log.WithField("metric", "slave/invalid_status_updates").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(frameworkMessagesValid, "framework", "valid")
-			c.(*settableCounterVec).Set(frameworkMessagesInvalid, "framework", "invalid")
-			c.(*settableCounterVec).Set(statusUpdateValid, "status", "valid")
-			c.(*settableCounterVec).Set(statusUpdateInvalid, "status", "invalid")
+			c.(*settableCounterVec).Set(frameworkMessagesValid, "framework", "valid", hostname)
+			c.(*settableCounterVec).Set(frameworkMessagesInvalid, "framework", "invalid", hostname)
+			c.(*settableCounterVec).Set(statusUpdateValid, "status", "valid", hostname)
+			c.(*settableCounterVec).Set(statusUpdateInvalid, "status", "invalid", hostname)
 
 			return nil
 		},

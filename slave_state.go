@@ -7,7 +7,6 @@ package main
 
 import (
 	"encoding/json"
-
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
@@ -45,7 +44,7 @@ type (
 func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
 	c := slaveStateCollector{httpClient, make(map[*prometheus.Desc]slaveMetric)}
 
-	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name"}
+	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name", "hostname"}
 	normalisedUserTaskLabelList := normaliseLabelList(userTaskLabelList)
 	taskLabelList := append(defaultTaskLabels, normalisedUserTaskLabelList...)
 
@@ -66,6 +65,7 @@ func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, 
 							"executor_id":  e.ID,
 							"task_id":      t.ID,
 							"task_name":    t.Name,
+							"hostname":		httpClient.hostname,
 						}
 
 						// User labels
@@ -124,6 +124,7 @@ func (c *slaveStateCollector) Collect(ch chan<- prometheus.Metric) {
 	c.fetchAndDecode("/slave(1)/state", &s)
 	for d, cm := range c.metrics {
 		for _, m := range cm.value(&s) {
+			log.Infof("%s -> %s", d, m.labels)
 			ch <- prometheus.MustNewConstMetric(d, cm.valueType, m.result, m.labels...)
 		}
 	}

@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,7 +20,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	log "github.com/sirupsen/logrus"
-	"net"
 )
 
 var errorCounter = prometheus.NewCounter(prometheus.CounterOpts{
@@ -331,14 +331,15 @@ func main() {
 		}
 		for _, f := range slaveCollectors {
 			for _, agent := range agentUrls {
-				log.Infof("Host: %s", agent)
+				// log.Infof("Host: %s", agent)
 				u, err := url.Parse(agent)
 				if err != nil {
 					log.Fatal(err)
 				}
 				c := f(mkHTTPClient(u.Hostname(), agent, *timeout, auth, certPool, certs))
 				if err := prometheus.Register(c); err != nil {
-					log.WithField("error", err).Fatal("Prometheus Register() error")
+					// log.Infof("Register: %s %s", agent, err.Error())
+					// log.WithField("error", err).Fatal("Prometheus Register() error")
 				}
 			}
 		}

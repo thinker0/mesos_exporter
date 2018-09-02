@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -257,6 +259,7 @@ func (httpClient *httpClient) fetchAndDecode(endpoint string, target interface{}
 		}).Error("Error creating HTTP request")
 		return false
 	}
+	req.Header.Add("Accept-Encoding", "gzip")
 	req.Header.Add("User-Agent", httpClient.userAgent)
 	if httpClient.auth.username != "" && httpClient.auth.password != "" {
 		req.SetBasicAuth(httpClient.auth.username, httpClient.auth.password)
@@ -276,7 +279,15 @@ func (httpClient *httpClient) fetchAndDecode(endpoint string, target interface{}
 	}
 	defer res.Body.Close()
 
-	if err := json.NewDecoder(res.Body).Decode(&target); err != nil {
+	var reader io.ReadCloser
+	switch res.Header.Get("Content-Encoding") {
+	case "gzip":
+		reader, err = gzip.NewReader(res.Body)
+		defer reader.Close()
+	default:
+		reader = res.Body
+	}
+	if err := json.NewDecoder(reader).Decode(&target); err != nil {
 		log.WithFields(log.Fields{
 			"url":   url,
 			"error": err,
