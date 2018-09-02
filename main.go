@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -220,7 +221,7 @@ func main() {
 	addr := fs.String("addr", ":9105", "Address to listen on")
 	masterURL := fs.String("master", "", "Expose metrics from master running on this URL")
 	slaveURL := fs.String("slave", "", "Expose metrics from slave running on this URL")
-	//discoverMode := flag.String("discover", "discover", "The mode in which to run the exporter: 'discover'.")
+	discoverURL := fs.String("discover", "", "Expose metrics from master running on this URL")
 	timeout := fs.Duration("timeout", 10*time.Second, "Master polling timeout")
 	exportedTaskLabels := fs.String("exportedTaskLabels", "", "Comma-separated list of task labels to include in the corresponding metric")
 	exportedSlaveAttributes := fs.String("exportedSlaveAttributes", "", "Comma-separated list of slave attributes to include in the corresponding metric")
@@ -236,7 +237,6 @@ func main() {
 	skipSSLVerify := fs.Bool("skipSSLVerify", false, "Skip SSL certificate verification")
 	vers := fs.Bool("version", false, "Show version")
 	enableMasterState := fs.Bool("enableMasterState", true, "Enable collection from the master's /state endpoint")
-	// scrapeInterval := flag.Duration("scrap.interval", 60*time.Second, "Scrape interval duration")
 
 	fs.Parse(os.Args[1:])
 
@@ -245,8 +245,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *masterURL != "" && *slaveURL != "" {
-		log.Fatal("Only -master or -slave can be given at a time")
+	if *masterURL != "" && *slaveURL != "" && *discoverURL != "" {
+		log.Fatal("Only -master or -slave or -discover can be given at a time")
 	}
 
 	// Getting logging setup with the appropriate log level
@@ -310,6 +310,40 @@ func main() {
 	slaveTaskLabels := csvInputToList(*exportedTaskLabels)
 
 	switch {
+	case *discoverURL != "":
+		log.Info("Exporter Mode")
+
+		slaveCollectors := []func(*httpClient) prometheus.Collector{
+			func(c *httpClient) prometheus.Collector {
+				return newSlaveCollector(c, c.hostname)
+			},
+			func(c *httpClient) prometheus.Collector {
+				return newSlaveMonitorCollector(c)
+			},
+			func(c *httpClient) prometheus.Collector {
+				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
+			},
+		}
+
+		agentUrls, err := agentsDiscover(*discoverURL)
+		if err != nil {
+			log.Warn("could not parse master/agents: ", err)
+		}
+		for _, f := range slaveCollectors {
+			for _, agent := range agentUrls {
+				log.Infof("Host: %s", agent)
+				u, err := url.Parse(agent)
+				if err != nil {
+					log.Fatal(err)
+				}
+				c := f(mkHTTPClient(u.Hostname(), agent, *timeout, auth, certPool, certs))
+				if err := prometheus.Register(c); err != nil {
+					log.WithField("error", err).Fatal("Prometheus Register() error")
+				}
+			}
+		}
+		log.WithField("address", *addr).Info("Exposing slave metrics")
+
 	case *masterURL != "":
 		log.WithField("address", *addr).Info("Exposing master metrics")
 
@@ -328,35 +362,6 @@ func main() {
 				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
 		}
-
-		log.Info("Exporter Mode")
-
-		slaveCollectors := []func(*httpClient) prometheus.Collector{
-			func(c *httpClient) prometheus.Collector {
-				return newSlaveCollector(c, c.hostname)
-			},
-			func(c *httpClient) prometheus.Collector {
-				return newSlaveMonitorCollector(c)
-			},
-			func(c *httpClient) prometheus.Collector {
-				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
-			},
-		}
-
-		agentUrls, err := agentsDiscover(*masterURL)
-		if err != nil {
-			log.Warn("could not parse master/agents: ", err)
-		}
-		for _, f := range slaveCollectors {
-			for _, agent := range agentUrls {
-				log.Infof("Host: %s", agent)
-				c := f(mkHTTPClient(hostname, agent, *timeout, auth, certPool, certs))
-				if err := prometheus.Register(c); err != nil {
-					log.WithField("error", err).Fatal("Prometheus Register() error")
-				}
-			}
-		}
-		log.WithField("address", *addr).Info("Exposing slave metrics")
 
 	case *slaveURL != "":
 		log.WithField("address", *addr).Info("Exposing slave metrics")
