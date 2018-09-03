@@ -168,7 +168,7 @@ type httpClient struct {
 
 type metricCollector struct {
 	httpClients []*httpClient
-	metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error
+	metrics     map[prometheus.Collector]func(metricMap, prometheus.Collector) error
 }
 
 func newMetricCollector(httpClients []*httpClient, metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error) prometheus.Collector {
@@ -282,7 +282,13 @@ func (httpClient *httpClient) fetchAndDecode(endpoint string, target interface{}
 	var reader io.ReadCloser
 	switch res.Header.Get("Content-Encoding") {
 	case "gzip":
-		reader, err = gzip.NewReader(res.Body)
+		if reader, err = gzip.NewReader(res.Body); err != nil {
+			log.WithFields(log.Fields{
+				"url":   url,
+				"error": err,
+			}).Error("Error fetching URL")
+			errorCounter.Inc()
+		}
 		defer reader.Close()
 	default:
 		reader = res.Body

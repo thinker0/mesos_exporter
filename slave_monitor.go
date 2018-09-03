@@ -53,7 +53,7 @@ type (
 
 	slaveCollector struct {
 		httpClients []*httpClient
-		metrics map[*prometheus.Desc]metric
+		metrics     map[*prometheus.Desc]metric
 	}
 
 	metric struct {

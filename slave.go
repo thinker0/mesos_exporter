@@ -201,7 +201,7 @@ func newSlaveCollector(httpClients []*httpClient) prometheus.Collector {
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(age)
 			return nil
 		},
-		gauge("slave", "executor_directory_max_allowed_age_secs",  "Max allowed age of the executor directory", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "executor_directory_max_allowed_age_secs", "Max allowed age of the executor directory", "hostname"): func(m metricMap, c prometheus.Collector) error {
 			age, ok := m["slave/executor_directory_max_allowed_age_secs"]
 			if !ok {
 				log.WithField("metric", "slave/executor_directory_max_allowed_age_secs").Warn(LogErrNotFoundInMap)
