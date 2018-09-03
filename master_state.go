@@ -34,19 +34,19 @@ type (
 
 	masterCollector struct {
 		httpClients []*httpClient
-		metrics     map[prometheus.Collector]func(*state, prometheus.Collector)
+		metrics     map[prometheus.Collector]func(*state, metricInfoMap, prometheus.Collector)
 	}
 )
 
 func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []string) prometheus.Collector {
 	labels := []string{"slave"}
-	metrics := map[prometheus.Collector]func(*state, prometheus.Collector){
+	metrics := map[prometheus.Collector]func(*state, metricInfoMap, prometheus.Collector){
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Help:      "Total slave CPUs (fractional)",
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "cpus",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Total.CPUs)
 			}
@@ -56,7 +56,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "cpus_used",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Used.CPUs)
 			}
@@ -66,7 +66,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "cpus_unreserved",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Unreserved.CPUs)
 			}
@@ -76,7 +76,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "mem_bytes",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Total.Mem * 1024)
 			}
@@ -86,7 +86,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "mem_used_bytes",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Used.Mem * 1024)
 			}
@@ -96,7 +96,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "mem_unreserved_bytes",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Unreserved.Mem * 1024)
 			}
@@ -106,7 +106,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "disk_bytes",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Total.Disk * 1024)
 			}
@@ -116,7 +116,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "disk_used_bytes",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Used.Disk * 1024)
 			}
@@ -126,7 +126,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "disk_unreserved_bytes",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Unreserved.Disk * 1024)
 			}
@@ -136,7 +136,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "ports",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				size := s.Total.Ports.size()
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(float64(size))
@@ -147,7 +147,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "ports_used",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				size := s.Used.Ports.size()
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(float64(size))
@@ -158,7 +158,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 			Namespace: "mesos",
 			Subsystem: "slave",
 			Name:      "ports_unreserved",
-		}, labels): func(st *state, c prometheus.Collector) {
+		}, labels): func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				size := s.Unreserved.Ports.size()
 				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(float64(size))
@@ -170,7 +170,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 		normalisedAttributeLabels := normaliseLabelList(slaveAttributeLabels)
 		slaveAttributesLabelsExport := append(labels, normalisedAttributeLabels...)
 
-		metrics[counter("slave", "attributes", "Attributes assigned to slaves", slaveAttributesLabelsExport...)] = func(st *state, c prometheus.Collector) {
+		metrics[counter("slave", "attributes", "Attributes assigned to slaves", slaveAttributesLabelsExport...)] = func(st *state, mi metricInfoMap, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				slaveAttributesExport := prometheus.Labels{
 					"slave": s.PID,
@@ -201,11 +201,14 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 
 func (c *masterCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, httpClient := range c.httpClients {
-		var s state
+		var (
+			s  state
+			mi metricInfoMap
+		)
 		log.WithField("url", "/state").Debug("fetching URL")
 		httpClient.fetchAndDecode("/state", &s)
 		for c, set := range c.metrics {
-			set(&s, c)
+			set(&s, mi, c)
 			c.Collect(ch)
 		}
 	}

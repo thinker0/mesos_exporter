@@ -240,7 +240,7 @@ func (c *slaveCollector) Collect(ch chan<- prometheus.Metric) {
 
 		for _, exec := range stats {
 			for desc, m := range c.metrics {
-				// log.Infof("%s -> %s", desc, httpClient.hostname)
+				// log.Debugf("%s -> %s", desc, httpClient.hostname)
 				ch <- prometheus.MustNewConstMetric(desc, m.valueType, m.get(exec.Statistics), exec.ID, exec.FrameworkID, exec.Source, httpClient.hostname)
 			}
 		}

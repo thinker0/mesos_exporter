@@ -34,7 +34,7 @@ type (
 	}
 	slaveMetric struct {
 		valueType prometheus.ValueType
-		value     func(*slaveState) []metricValue
+		value     func(*slaveState, metricInfoMap) []metricValue
 	}
 	metricValue struct {
 		result float64
@@ -54,7 +54,7 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 		"Labels assigned to tasks running on slaves",
 		taskLabelList,
 		nil)] = slaveMetric{prometheus.CounterValue,
-		func(st *slaveState) []metricValue {
+		func(st *slaveState, mi metricInfoMap) []metricValue {
 			res := []metricValue{}
 			for _, f := range st.Frameworks {
 				for _, e := range f.Executors {
@@ -66,7 +66,7 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 							"executor_id":  e.ID,
 							"task_id":      t.ID,
 							"task_name":    t.Name,
-							"hostname":     st.Hostname,
+							"hostname":     mi["hostname"],
 						}
 
 						// User labels
@@ -97,7 +97,7 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 			"Attributes assigned to slaves",
 			normalisedAttributeLabels,
 			nil)] = slaveMetric{prometheus.CounterValue,
-			func(st *slaveState) []metricValue {
+			func(st *slaveState, mi metricInfoMap) []metricValue {
 				slaveAttributes := prometheus.Labels{}
 
 				for _, label := range normalisedAttributeLabels {
@@ -121,11 +121,15 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 
 func (c *slaveStateCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, httpClient := range c.httpClients {
-		var s slaveState
+		var (
+			s  slaveState
+			mi metricInfoMap = make(map[string]string)
+		)
 		log.WithField("url", "/slave(1)/state").Debug("fetching URL")
 		httpClient.fetchAndDecode("/slave(1)/state", &s)
+		mi["hostname"] = httpClient.hostname
 		for d, cm := range c.metrics {
-			for _, m := range cm.value(&s) {
+			for _, m := range cm.value(&s, mi) {
 				// log.Debugf("%s -> %s", d, m.labels)
 				ch <- prometheus.MustNewConstMetric(d, cm.valueType, m.result, m.labels...)
 			}

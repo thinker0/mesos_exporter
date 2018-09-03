@@ -368,7 +368,7 @@ func main() {
 			log.Fatal("Unable to get the hostname of this machine")
 		}
 		if err := prometheus.Register(
-			newMasterCollector(httpClients, hostname)); err != nil {
+			newMasterCollector(httpClients)); err != nil {
 			log.WithField("error", err).Fatal("Prometheus Register() error")
 		}
 

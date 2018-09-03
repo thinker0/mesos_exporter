@@ -62,16 +62,48 @@ type (
 		Scheme        string `json:"scheme"`
 		UID           string `json:"uid"`
 	}
+
+	metricMap map[string]float64
+
+	metricInfoMap map[string]string
+
+	settableCounterVec struct {
+		desc   *prometheus.Desc
+		values []prometheus.Metric
+	}
+
+	settableCounter struct {
+		desc  *prometheus.Desc
+		value prometheus.Metric
+	}
+
+	authInfo struct {
+		username      string
+		password      string
+		loginURL      string
+		token         string
+		tokenExpire   int64
+		signingKey    []byte
+		strictMode    bool
+		privateKey    string
+		skipSSLVerify bool
+	}
+
+	httpClient struct {
+		http.Client
+		hostname  string
+		url       string
+		auth      authInfo
+		userAgent string
+	}
+
+	metricCollector struct {
+		httpClients []*httpClient
+		metrics     map[prometheus.Collector]func(metricMap, metricInfoMap, prometheus.Collector) error
+	}
 )
 
-type metricMap map[string]float64
-
 const LogErrNotFoundInMap = "Couldn't find key in map"
-
-type settableCounterVec struct {
-	desc   *prometheus.Desc
-	values []prometheus.Metric
-}
 
 func (c *settableCounterVec) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.desc
@@ -87,11 +119,6 @@ func (c *settableCounterVec) Collect(ch chan<- prometheus.Metric) {
 
 func (c *settableCounterVec) Set(value float64, labelValues ...string) {
 	c.values = append(c.values, prometheus.MustNewConstMetric(c.desc, prometheus.CounterValue, value, labelValues...))
-}
-
-type settableCounter struct {
-	desc  *prometheus.Desc
-	value prometheus.Metric
 }
 
 func (c *settableCounter) Describe(ch chan<- *prometheus.Desc) {
@@ -146,32 +173,7 @@ func counter(subsystem, name, help string, labels ...string) *settableCounterVec
 	}
 }
 
-type authInfo struct {
-	username      string
-	password      string
-	loginURL      string
-	token         string
-	tokenExpire   int64
-	signingKey    []byte
-	strictMode    bool
-	privateKey    string
-	skipSSLVerify bool
-}
-
-type httpClient struct {
-	http.Client
-	hostname  string
-	url       string
-	auth      authInfo
-	userAgent string
-}
-
-type metricCollector struct {
-	httpClients []*httpClient
-	metrics     map[prometheus.Collector]func(metricMap, prometheus.Collector) error
-}
-
-func newMetricCollector(httpClients []*httpClient, metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error) prometheus.Collector {
+func newMetricCollector(httpClients []*httpClient, metrics map[prometheus.Collector]func(metricMap, metricInfoMap, prometheus.Collector) error) prometheus.Collector {
 	return &metricCollector{httpClients, metrics}
 }
 
@@ -307,11 +309,15 @@ func (httpClient *httpClient) fetchAndDecode(endpoint string, target interface{}
 
 func (c *metricCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, httpClient := range c.httpClients {
-		var m metricMap
+		var (
+			m  metricMap
+			mi metricInfoMap = make(map[string]string)
+		)
 		log.WithField("url", "/metrics/snapshot").Debug("fetching URL")
 		httpClient.fetchAndDecode("/metrics/snapshot", &m)
+		mi["hostname"] = httpClient.hostname
 		for cm, f := range c.metrics {
-			if err := f(m, cm); err != nil {
+			if err := f(m, mi, cm); err != nil {
 				ch := make(chan *prometheus.Desc, 1)
 				log.WithFields(log.Fields{
 					"metric": <-ch,
