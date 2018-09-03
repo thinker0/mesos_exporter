@@ -33,8 +33,8 @@ type (
 	}
 
 	masterCollector struct {
-		httpClients	[]*httpClient
-		metrics map[prometheus.Collector]func(*state, prometheus.Collector)
+		httpClients []*httpClient
+		metrics     map[prometheus.Collector]func(*state, prometheus.Collector)
 	}
 )
 
@@ -195,7 +195,7 @@ func newMasterStateCollector(httpClient []*httpClient, slaveAttributeLabels []st
 
 	return &masterCollector{
 		httpClients: httpClient,
-		metrics:    metrics,
+		metrics:     metrics,
 	}
 }
 

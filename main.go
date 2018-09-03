@@ -197,7 +197,14 @@ func agentsDiscover(masterURL string, timeout time.Duration, auth authInfo, cert
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
-		reader, err = gzip.NewReader(resp.Body)
+		if reader, err = gzip.NewReader(resp.Body); err != nil {
+			log.WithFields(log.Fields{
+				"url":   masterURL,
+				"error": err,
+			}).Error("Error fetching URL")
+			errorCounter.Inc()
+
+		}
 		defer reader.Close()
 	default:
 		reader = resp.Body

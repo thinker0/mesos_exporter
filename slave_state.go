@@ -13,7 +13,7 @@ import (
 
 type (
 	slaveState struct {
-		Hostname string
+		Hostname   string
 		Attributes map[string]json.RawMessage `json:"attributes"`
 		Frameworks []slaveFramework           `json:"frameworks"`
 	}
