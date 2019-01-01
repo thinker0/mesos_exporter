@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -225,16 +226,14 @@ func agentsDiscover(masterURL string, timeout time.Duration, auth authInfo, cert
 				port = "5051"
 			}
 			agentUrl := fmt.Sprintf("http://%s:%s", host, port)
-			log.Debugf("Agent: %s", agentUrl)
-			u, err := url.Parse(agentUrl)
-			if err != nil {
-				log.Fatal(err)
-			}
-			client := mkHTTPClient(u.Hostname(), agentUrl, timeout, auth, certPool, certs)
+			log.Debugf("Agent: %s %s", slave.Hostname, agentUrl)
+			client := mkHTTPClient(slave.Hostname, agentUrl, timeout, auth, certPool, certs)
 			slaveURLs = append(slaveURLs, client)
 		}
 	}
-
+	sort.Slice(slaveURLs, func(i, j int) bool {
+		return slaveURLs[i].hostname < slaveURLs[j].hostname
+	})
 	log.Infof("%d slaves discovered", len(slaveURLs))
 	return slaveURLs, nil
 }
@@ -245,6 +244,7 @@ func main() {
 	masterURL := fs.String("master", "", "Expose metrics from master running on this URL")
 	slaveURL := fs.String("slave", "", "Expose metrics from slave running on this URL")
 	discoverURL := fs.String("discover", "", "Expose metrics from master running on this URL")
+	instance := fs.Int("instance", 1, "Instance Expose metrics from master running on this URL")
 	timeout := fs.Duration("timeout", 10*time.Second, "Master polling timeout")
 	exportedTaskLabels := fs.String("exportedTaskLabels", "", "Comma-separated list of task labels to include in the corresponding metric")
 	exportedSlaveAttributes := fs.String("exportedSlaveAttributes", "", "Comma-separated list of slave attributes to include in the corresponding metric")
@@ -338,29 +338,24 @@ func main() {
 
 		slaveCollectors := []func(*httpClient) prometheus.Collector{
 			func(c *httpClient) prometheus.Collector {
-				log.Infof("newSlaveCollector: %s", c.hostname)
 				return newSlaveCollector(c)
 			},
 			func(c *httpClient) prometheus.Collector {
-				log.Infof("newSlaveMonitorCollector: %s", c.hostname)
 				return newSlaveMonitorCollector(c)
 			},
 			func(c *httpClient) prometheus.Collector {
-				log.Infof("newSlaveStateCollector: %s", c.hostname)
 				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
 			},
 		}
 
 		agentUrls, err := agentsDiscover(*discoverURL, *timeout, auth, certPool, certs)
 		if err != nil {
-			log.Warn("could not parse master/agents: ", err)
+			log.Fatal("could not parse master/agents: ", err)
 		}
-		for _, agents := range agentUrls {
-			for _, f := range slaveCollectors {
-				c := f(agents)
-				if err := prometheus.Register(c); err != nil {
-					log.WithField("error", err).Fatal("Prometheus Register() error")
-				}
+		for _, f := range slaveCollectors {
+			c := f(agentUrls[*instance])
+			if err := prometheus.Register(c); err != nil {
+				log.WithField("error", err).Fatal("Prometheus Register() error")
 			}
 		}
 		log.WithField("address", *addr).Info("Exposing slave metrics")
