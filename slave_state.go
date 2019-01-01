@@ -29,8 +29,8 @@ type (
 	}
 
 	slaveStateCollector struct {
-		httpClient  *httpClient
-		metrics     map[*prometheus.Desc]slaveMetric
+		*httpClient
+		metrics map[*prometheus.Desc]slaveMetric
 	}
 	slaveMetric struct {
 		valueType prometheus.ValueType
@@ -44,6 +44,7 @@ type (
 
 func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
 	c := slaveStateCollector{httpClient, make(map[*prometheus.Desc]slaveMetric)}
+
 	hostname := httpClient.hostname
 	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name", "hostname"}
 	normalisedUserTaskLabelList := normaliseLabelList(userTaskLabelList)
@@ -97,7 +98,7 @@ func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, 
 			"Attributes assigned to slaves",
 			normalisedAttributeLabels,
 			nil)] = slaveMetric{prometheus.CounterValue,
-			func(st *slaveState, ) []metricValue {
+			func(st *slaveState) []metricValue {
 				slaveAttributes := prometheus.Labels{}
 
 				for _, label := range normalisedAttributeLabels {
@@ -122,7 +123,7 @@ func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, 
 func (c *slaveStateCollector) Collect(ch chan<- prometheus.Metric) {
 	var s slaveState
 	log.WithField("url", "/slave(1)/state").Debug("fetching URL")
-	c.httpClient.fetchAndDecode("/slave(1)/state", &s)
+	c.fetchAndDecode("/slave(1)/state", &s)
 	for d, cm := range c.metrics {
 		for _, m := range cm.value(&s) {
 			// log.Debugf("%s -> %s", d, m.labels)

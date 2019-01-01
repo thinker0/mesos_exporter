@@ -52,8 +52,8 @@ type (
 	}
 
 	slaveCollector struct {
-		httpClient *httpClient
-		metrics     map[*prometheus.Desc]metric
+		*httpClient
+		metrics map[*prometheus.Desc]metric
 	}
 
 	metric struct {
@@ -235,7 +235,7 @@ func newSlaveMonitorCollector(httpClient *httpClient) prometheus.Collector {
 
 func (c *slaveCollector) Collect(ch chan<- prometheus.Metric) {
 	stats := []executor{}
-	c.httpClient.fetchAndDecode("/monitor/statistics", &stats)
+	c.fetchAndDecode("/monitor/statistics", &stats)
 
 	for _, exec := range stats {
 		for desc, m := range c.metrics {
