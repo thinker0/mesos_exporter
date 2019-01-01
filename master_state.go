@@ -12,14 +12,15 @@ import (
 
 type (
 	slave struct {
-		Active     bool
-		PID        string                     `json:"pid"`
-		Hostname   string					  `json:"hostname"`
-		Used       resources                  `json:"used_resources"`
-		Unreserved resources                  `json:"unreserved_resources"`
-		Total      resources                  `json:"resources"`
-		RegisteredTime float32				  `json:"registered_time"`
-		Attributes map[string]json.RawMessage `json:"attributes"`
+		Active         bool
+		PID            string                     `json:"pid"`
+		Hostname       string                     `json:"hostname"`
+		Used           resources                  `json:"used_resources"`
+		Unreserved     resources                  `json:"unreserved_resources"`
+		Total          resources                  `json:"resources"`
+		RegisteredTime float32                    `json:"registered_time"`
+		Version        string                     `json:"version"`
+		Attributes     map[string]json.RawMessage `json:"attributes"`
 	}
 
 	framework struct {
@@ -196,7 +197,7 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 
 	return &masterCollector{
 		httpClient: httpClient,
-		metrics:     metrics,
+		metrics:    metrics,
 	}
 }
 
