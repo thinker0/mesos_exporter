@@ -33,8 +33,8 @@ type (
 	}
 
 	masterCollector struct {
-		httpClient *httpClient
-		metrics     map[prometheus.Collector]func(*state, prometheus.Collector)
+		*httpClient
+		metrics map[prometheus.Collector]func(*state, prometheus.Collector)
 	}
 )
 
@@ -202,7 +202,7 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 func (c *masterCollector) Collect(ch chan<- prometheus.Metric) {
 	var s state
 	log.WithField("url", "/state").Debug("fetching URL")
-	c.httpClient.fetchAndDecode("/state", &s)
+	c.fetchAndDecode("/state", &s)
 	for c, set := range c.metrics {
 		set(&s, c)
 		c.Collect(ch)

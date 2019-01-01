@@ -65,8 +65,6 @@ type (
 
 	metricMap map[string]float64
 
-	metricInfoMap map[string]string
-
 	settableCounterVec struct {
 		desc   *prometheus.Desc
 		values []prometheus.Metric
@@ -98,8 +96,8 @@ type (
 	}
 
 	metricCollector struct {
-		httpClient  *httpClient
-		metrics     map[prometheus.Collector]func(metricMap, prometheus.Collector) error
+		*httpClient
+		metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error
 	}
 )
 
@@ -310,7 +308,7 @@ func (httpClient *httpClient) fetchAndDecode(endpoint string, target interface{}
 func (c *metricCollector) Collect(ch chan<- prometheus.Metric) {
 	var m metricMap
 	log.WithField("url", "/metrics/snapshot").Debug("fetching URL")
-	c.httpClient.fetchAndDecode("/metrics/snapshot", &m)
+	c.fetchAndDecode("/metrics/snapshot", &m)
 	for cm, f := range c.metrics {
 		if err := f(m, cm); err != nil {
 			ch := make(chan *prometheus.Desc, 1)
