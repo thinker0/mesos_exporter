@@ -52,7 +52,7 @@ type (
 	}
 
 	slaveCollector struct {
-		httpClients []*httpClient
+		httpClient *httpClient
 		metrics     map[*prometheus.Desc]metric
 	}
 
@@ -62,11 +62,11 @@ type (
 	}
 )
 
-func newSlaveMonitorCollector(httpClient []*httpClient) prometheus.Collector {
+func newSlaveMonitorCollector(httpClient *httpClient) prometheus.Collector {
 	labels := []string{"id", "framework_id", "source", "hostname"}
 
 	return &slaveCollector{
-		httpClients: httpClient,
+		httpClient: httpClient,
 		metrics: map[*prometheus.Desc]metric{
 			// Processes
 			prometheus.NewDesc(
@@ -234,15 +234,13 @@ func newSlaveMonitorCollector(httpClient []*httpClient) prometheus.Collector {
 }
 
 func (c *slaveCollector) Collect(ch chan<- prometheus.Metric) {
-	for _, httpClient := range c.httpClients {
-		stats := []executor{}
-		httpClient.fetchAndDecode("/monitor/statistics", &stats)
+	stats := []executor{}
+	c.httpClient.fetchAndDecode("/monitor/statistics", &stats)
 
-		for _, exec := range stats {
-			for desc, m := range c.metrics {
-				// log.Debugf("%s -> %s", desc, httpClient.hostname)
-				ch <- prometheus.MustNewConstMetric(desc, m.valueType, m.get(exec.Statistics), exec.ID, exec.FrameworkID, exec.Source, httpClient.hostname)
-			}
+	for _, exec := range stats {
+		for desc, m := range c.metrics {
+			// log.Debugf("%s -> %s", desc, httpClient.hostname)
+			ch <- prometheus.MustNewConstMetric(desc, m.valueType, m.get(exec.Statistics), exec.ID, exec.FrameworkID, exec.Source, c.httpClient.hostname)
 		}
 	}
 }

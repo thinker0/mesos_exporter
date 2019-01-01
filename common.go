@@ -98,8 +98,8 @@ type (
 	}
 
 	metricCollector struct {
-		httpClients []*httpClient
-		metrics     map[prometheus.Collector]func(metricMap, metricInfoMap, prometheus.Collector) error
+		httpClient  *httpClient
+		metrics     map[prometheus.Collector]func(metricMap, prometheus.Collector) error
 	}
 )
 
@@ -173,8 +173,8 @@ func counter(subsystem, name, help string, labels ...string) *settableCounterVec
 	}
 }
 
-func newMetricCollector(httpClients []*httpClient, metrics map[prometheus.Collector]func(metricMap, metricInfoMap, prometheus.Collector) error) prometheus.Collector {
-	return &metricCollector{httpClients, metrics}
+func newMetricCollector(httpClient *httpClient, metrics map[prometheus.Collector]func(metricMap, prometheus.Collector) error) prometheus.Collector {
+	return &metricCollector{httpClient, metrics}
 }
 
 func signingToken(httpClient *httpClient) string {
@@ -308,28 +308,21 @@ func (httpClient *httpClient) fetchAndDecode(endpoint string, target interface{}
 }
 
 func (c *metricCollector) Collect(ch chan<- prometheus.Metric) {
-	for _, httpClient := range c.httpClients {
-		var (
-			m  metricMap
-			mi metricInfoMap = make(map[string]string)
-		)
-		log.WithField("url", "/metrics/snapshot").Debug("fetching URL")
-		httpClient.fetchAndDecode("/metrics/snapshot", &m)
-		mi["hostname"] = httpClient.hostname
-		for cm, f := range c.metrics {
-			if err := f(m, mi, cm); err != nil {
-				ch := make(chan *prometheus.Desc, 1)
-				log.WithFields(log.Fields{
-					"metric": <-ch,
-					"error":  err,
-				}).Error("Error extracting metric")
-				errorCounter.Inc()
-				continue
-			}
-			cm.Collect(ch)
+	var m metricMap
+	log.WithField("url", "/metrics/snapshot").Debug("fetching URL")
+	c.httpClient.fetchAndDecode("/metrics/snapshot", &m)
+	for cm, f := range c.metrics {
+		if err := f(m, cm); err != nil {
+			ch := make(chan *prometheus.Desc, 1)
+			log.WithFields(log.Fields{
+				"metric": <-ch,
+				"error":  err,
+			}).Error("Error extracting metric")
+			errorCounter.Inc()
+			continue
 		}
+		cm.Collect(ch)
 	}
-
 }
 
 func (c *metricCollector) Describe(ch chan<- *prometheus.Desc) {

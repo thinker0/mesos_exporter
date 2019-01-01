@@ -29,12 +29,12 @@ type (
 	}
 
 	slaveStateCollector struct {
-		httpClients []*httpClient
+		httpClient  *httpClient
 		metrics     map[*prometheus.Desc]slaveMetric
 	}
 	slaveMetric struct {
 		valueType prometheus.ValueType
-		value     func(*slaveState, metricInfoMap) []metricValue
+		value     func(*slaveState) []metricValue
 	}
 	metricValue struct {
 		result float64
@@ -42,9 +42,9 @@ type (
 	}
 )
 
-func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
-	c := slaveStateCollector{httpClients, make(map[*prometheus.Desc]slaveMetric)}
-
+func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
+	c := slaveStateCollector{httpClient, make(map[*prometheus.Desc]slaveMetric)}
+	hostname := httpClient.hostname
 	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name", "hostname"}
 	normalisedUserTaskLabelList := normaliseLabelList(userTaskLabelList)
 	taskLabelList := append(defaultTaskLabels, normalisedUserTaskLabelList...)
@@ -54,7 +54,7 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 		"Labels assigned to tasks running on slaves",
 		taskLabelList,
 		nil)] = slaveMetric{prometheus.CounterValue,
-		func(st *slaveState, mi metricInfoMap) []metricValue {
+		func(st *slaveState) []metricValue {
 			res := []metricValue{}
 			for _, f := range st.Frameworks {
 				for _, e := range f.Executors {
@@ -66,7 +66,7 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 							"executor_id":  e.ID,
 							"task_id":      t.ID,
 							"task_name":    t.Name,
-							"hostname":     mi["hostname"],
+							"hostname":     hostname,
 						}
 
 						// User labels
@@ -97,7 +97,7 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 			"Attributes assigned to slaves",
 			normalisedAttributeLabels,
 			nil)] = slaveMetric{prometheus.CounterValue,
-			func(st *slaveState, mi metricInfoMap) []metricValue {
+			func(st *slaveState, ) []metricValue {
 				slaveAttributes := prometheus.Labels{}
 
 				for _, label := range normalisedAttributeLabels {
@@ -120,19 +120,13 @@ func newSlaveStateCollector(httpClients []*httpClient, userTaskLabelList []strin
 }
 
 func (c *slaveStateCollector) Collect(ch chan<- prometheus.Metric) {
-	for _, httpClient := range c.httpClients {
-		var (
-			s  slaveState
-			mi metricInfoMap = make(map[string]string)
-		)
-		log.WithField("url", "/slave(1)/state").Debug("fetching URL")
-		httpClient.fetchAndDecode("/slave(1)/state", &s)
-		mi["hostname"] = httpClient.hostname
-		for d, cm := range c.metrics {
-			for _, m := range cm.value(&s, mi) {
-				// log.Debugf("%s -> %s", d, m.labels)
-				ch <- prometheus.MustNewConstMetric(d, cm.valueType, m.result, m.labels...)
-			}
+	var s slaveState
+	log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+	c.httpClient.fetchAndDecode("/slave(1)/state", &s)
+	for d, cm := range c.metrics {
+		for _, m := range cm.value(&s) {
+			// log.Debugf("%s -> %s", d, m.labels)
+			ch <- prometheus.MustNewConstMetric(d, cm.valueType, m.result, m.labels...)
 		}
 	}
 }
