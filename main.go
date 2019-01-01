@@ -220,11 +220,12 @@ func agentsDiscover(masterURL string, timeout time.Duration, auth authInfo, cert
 	for _, slave := range state.Slaves {
 		if slave.Active {
 			// Extract slave port from pid
-			_, port, err := net.SplitHostPort(slave.PID)
+			host, port, err := net.SplitHostPort(slave.PID)
 			if err != nil {
 				port = "5051"
 			}
-			agentUrl := fmt.Sprintf("http://%s:%s", slave.Hostname, port)
+			agentUrl := fmt.Sprintf("http://%s:%s", host, port)
+			log.Debugf("Agent: %s", agentUrl)
 			u, err := url.Parse(agentUrl)
 			if err != nil {
 				log.Fatal(err)
@@ -337,12 +338,15 @@ func main() {
 
 		slaveCollectors := []func(*httpClient) prometheus.Collector{
 			func(c *httpClient) prometheus.Collector {
+				log.Infof("newSlaveCollector: %s", c.hostname)
 				return newSlaveCollector(c)
 			},
 			func(c *httpClient) prometheus.Collector {
+				log.Infof("newSlaveMonitorCollector: %s", c.hostname)
 				return newSlaveMonitorCollector(c)
 			},
 			func(c *httpClient) prometheus.Collector {
+				log.Infof("newSlaveStateCollector: %s", c.hostname)
 				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
 			},
 		}
