@@ -226,7 +226,7 @@ func agentsDiscover(masterURL string, timeout time.Duration, auth authInfo, cert
 				port = "5051"
 			}
 			agentUrl := fmt.Sprintf("http://%s:%s", host, port)
-			log.Debugf("Agent: %s %s \t%s", slave.Version, slave.Hostname, agentUrl)
+			log.Debugf("Agent: %s %s", slave.Hostname, agentUrl)
 			client := mkHTTPClient(slave.Hostname, agentUrl, timeout, auth, certPool, certs)
 			slaveURLs = append(slaveURLs, client)
 		}
