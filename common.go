@@ -362,7 +362,7 @@ func getLabelValuesFromMap(labels prometheus.Labels, orderedLabelKeys []string) 
 }
 
 var (
-	text             = regexp.MustCompile("^[-[:word:]/.]*$")
+	text             = regexp.MustCompile("^[-*[:word:]/.]*$")
 	errDropAttribute = errors.New("value neither scalar nor text")
 )
 
