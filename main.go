@@ -234,6 +234,9 @@ func agentsDiscover(masterURL string, timeout time.Duration, auth authInfo, cert
 	sort.Slice(slaveURLs, func(i, j int) bool {
 		return slaveURLs[i].hostname < slaveURLs[j].hostname
 	})
+	for idx, client := range slaveURLs {
+		log.Debugf("Agent list: %d\t%s", idx, client.hostname)
+	}
 	log.Infof("%d slaves discovered", len(slaveURLs))
 	return slaveURLs, nil
 }
