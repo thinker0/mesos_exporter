@@ -341,13 +341,22 @@ func main() {
 
 		slaveCollectors := []func(*httpClient) prometheus.Collector{
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveCollector(c)
+				var s slaveState
+				log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+				c.fetchAndDecode("/slave(1)/state", &s)
+				return newSlaveCollector(c, s.Attributes, slaveTaskLabels, slaveAttributeLabels)
 			},
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveMonitorCollector(c)
+				var s slaveState
+				log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+				c.fetchAndDecode("/slave(1)/state", &s)
+				return newSlaveMonitorCollector(c, s.Attributes, slaveTaskLabels, slaveAttributeLabels)
 			},
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
+				var s slaveState
+				log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+				c.fetchAndDecode("/slave(1)/state", &s)
+				return newSlaveStateCollector(c, s, slaveTaskLabels, slaveAttributeLabels)
 			},
 		}
 
@@ -394,13 +403,22 @@ func main() {
 		}
 		slaveCollectors := []func(*httpClient) prometheus.Collector{
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveCollector(c)
+				var s slaveState
+				log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+				c.fetchAndDecode("/slave(1)/state", &s)
+				return newSlaveCollector(c, s.Attributes, slaveTaskLabels, slaveAttributeLabels)
 			},
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveMonitorCollector(c)
+				var s slaveState
+				log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+				c.fetchAndDecode("/slave(1)/state", &s)
+				return newSlaveMonitorCollector(c, s.Attributes, slaveTaskLabels, slaveAttributeLabels)
 			},
 			func(c *httpClient) prometheus.Collector {
-				return newSlaveStateCollector(c, slaveTaskLabels, slaveAttributeLabels)
+				var s slaveState
+				log.WithField("url", "/slave(1)/state").Debug("fetching URL")
+				c.fetchAndDecode("/slave(1)/state", &s)
+				return newSlaveStateCollector(c, s, slaveTaskLabels, slaveAttributeLabels)
 			},
 		}
 

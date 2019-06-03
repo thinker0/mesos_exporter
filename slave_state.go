@@ -42,13 +42,15 @@ type (
 	}
 )
 
-func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
+func newSlaveStateCollector(httpClient *httpClient, s slaveState, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
 	c := slaveStateCollector{httpClient, make(map[*prometheus.Desc]slaveMetric)}
 
 	hostname := httpClient.hostname
 	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name", "hostname"}
 	normalisedUserTaskLabelList := normaliseLabelList(userTaskLabelList)
 	taskLabelList := append(defaultTaskLabels, normalisedUserTaskLabelList...)
+	normalisedAttributeLabels := normaliseLabelList(slaveAttributeLabelList)
+	taskLabelList = append(defaultTaskLabels, normalisedAttributeLabels...)
 
 	c.metrics[prometheus.NewDesc(
 		prometheus.BuildFQName("mesos", "slave", "task_labels"),
@@ -79,6 +81,18 @@ func newSlaveStateCollector(httpClient *httpClient, userTaskLabelList []string, 
 							// Ignore labels not explicitly whitelisted by user
 							if stringInSlice(normalisedLabel, normalisedUserTaskLabelList) {
 								taskLabels[normalisedLabel] = label.Value
+							}
+						}
+
+						for _, label := range normalisedAttributeLabels {
+							taskLabels[label] = ""
+						}
+						for key, value := range st.Attributes {
+							normalisedLabel := normaliseLabel(key)
+							if stringInSlice(normalisedLabel, normalisedAttributeLabels) {
+								if attribute, err := attributeString(value); err == nil {
+									taskLabels[normalisedLabel] = attribute
+								}
 							}
 						}
 
