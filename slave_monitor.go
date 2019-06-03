@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -62,7 +63,7 @@ type (
 	}
 )
 
-func newSlaveMonitorCollector(httpClient *httpClient) prometheus.Collector {
+func newSlaveMonitorCollector(httpClient *httpClient, attributs map[string]json.RawMessage, userTaskLabelList []string, slaveAttributeLabelList []string) prometheus.Collector {
 	labels := []string{"id", "framework_id", "source", "hostname"}
 
 	return &slaveCollector{
