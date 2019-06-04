@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func addValuesFromMap(t string, labels prometheus.Labels, orderedLabelKeys []string) []string {
+func addValueFromMap(t string, labels prometheus.Labels, orderedLabelKeys []string) []string {
 	var labelValues []string
 	if len(t) > 0 {
 		labelValues = append (labelValues, t)
@@ -20,29 +20,39 @@ func addValuesFromMap(t string, labels prometheus.Labels, orderedLabelKeys []str
 	return labelValues
 }
 
+func addValuesFromMap(t []string, labels prometheus.Labels, orderedLabelKeys []string) []string {
+	var labelValues []string
+	if len(t) > 0 {
+		labelValues = append (labelValues, t...)
+	}
+	for _, label := range orderedLabelKeys {
+		labelValues = append(labelValues, labels[label])
+	}
+	return labelValues
+}
 
-func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMessage, userTaskLabelList []string, slaveAttributeLabelList []string) prometheus.Collector {
-	hostname := httpClient.hostname
+func newSlaveCollector(httpClient *httpClient, attr map[string]json.RawMessage, userTaskLabelList []string, slaveAttributeLabelList []string) prometheus.Collector {
 	defaultTaskLabels := []string{"type"}
-	labels := append(defaultTaskLabels, normaliseLabelList(slaveAttributeLabelList)...)
+	defaultLabels := append(defaultTaskLabels, normaliseLabelList(slaveAttributeLabelList)...)
 
 	sAtt := prometheus.Labels{}
-	for _, label := range labels {
+	for _, label := range defaultLabels {
 		sAtt[label] = ""
 	}
-	for key, value := range attributs {
+	for key, value := range attr {
 		normalisedLabel := normaliseLabel(key)
-		if stringInSlice(normalisedLabel, labels) {
+		if stringInSlice(normalisedLabel, defaultLabels) {
 			if attribute, err := attributeString(value); err == nil {
 				sAtt[normalisedLabel] = attribute
 			}
 		}
 	}
-	subLabels := labels[1:]
+	subLabels := defaultLabels[1:]
 
 	metrics := map[prometheus.Collector]func(metricMap, prometheus.Collector) error{
 		// CPU/Disk/Mem resources in free/used
-		gauge("slave", "cpus", "Current CPU resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "cpus", "Current CPU resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/cpus_percent"]
 			if !ok {
 				log.WithField("metric", "slave/cpus_percent").Warn(LogErrNotFoundInMap)
@@ -55,14 +65,15 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/cpus_used").Warn(LogErrNotFoundInMap)
 			}
-			getLabelValuesFromMap(sAtt, labels[1:])
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			getLabelValuesFromMap(sAtt, defaultLabels[1:])
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("slave", "cpus_revocable", "Current revocable CPU resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "cpus_revocable", "Current revocable CPU resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/cpus_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/cpus_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -75,13 +86,14 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/cpus_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("slave", "mem", "Current memory resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "mem", "Current memory resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/mem_percent"]
 			if !ok {
 				log.WithField("metric", "slave/mem_percent").Warn(LogErrNotFoundInMap)
@@ -94,13 +106,14 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/mem_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("slave", "mem_revocable", "Current revocable memory resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "mem_revocable", "Current revocable memory resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/mem_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/mem_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -113,13 +126,14 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/mem_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("slave", "gpus", "Current GPU resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "gpus", "Current GPU resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/gpus_percent"]
 			if !ok {
 				log.WithField("metric", "slave/gpus_percent").Warn(LogErrNotFoundInMap)
@@ -132,13 +146,14 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/gpus_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("slave", "gpus_revocable", "Current revocable GPUS resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "gpus_revocable", "Current revocable GPUS resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/gpus_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/gpus_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -151,13 +166,14 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/gpus_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("slave", "disk", "Current disk resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "disk", "Current disk resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/disk_percent"]
 			if !ok {
 				log.WithField("metric", "slave/disk_percent").Warn(LogErrNotFoundInMap)
@@ -170,13 +186,14 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/disk_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("slave", "disk_revocable", "Current disk resources in cluster.", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "disk_revocable", "Current disk resources in cluster.",
+			defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			percent, ok := m["slave/disk_revocable_percent"]
 			if !ok {
 				log.WithField("metric", "slave/disk_revocable_percent").Warn(LogErrNotFoundInMap)
@@ -189,60 +206,65 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/disk_revocable_used").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("percent", sAtt, subLabels)...).Set(percent)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("percent", sAtt, subLabels)...).Set(percent)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
 
 		// Slave stats about uptime and connectivity
-		gauge("slave", "registered", "1 if slave is registered with master, 0 if not.", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "registered", "1 if slave is registered with master, 0 if not.",
+			subLabels...): func(m metricMap, c prometheus.Collector) error {
 			registered, ok := m["slave/registered"]
 			if !ok {
 				log.WithField("metric", "slave/registered").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(registered)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("", sAtt, subLabels)...).Set(registered)
 			return nil
 		},
-		gauge("slave", "uptime_seconds", "Number of seconds the slave process is running.", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "uptime_seconds", "Number of seconds the slave process is running.",
+			subLabels...): func(m metricMap, c prometheus.Collector) error {
 			uptime, ok := m["slave/uptime_secs"]
 			if !ok {
 				log.WithField("metric", "slave/uptime_seconds").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(uptime)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("", sAtt, subLabels)...).Set(uptime)
 			return nil
 		},
 		counter("slave",
 			"recovery_errors",
-			"Total number of recovery errors", labels[1:]...): func(m metricMap, c prometheus.Collector) error {
+			"Total number of recovery errors", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			errors, ok := m["slave/recovery_errors"]
 			if !ok {
 				log.WithField("metric", "slave/recovery_errors").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(errors, addValuesFromMap("", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(errors, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		gauge("slave", "recovery_time_secs", "Agent recovery time in seconds", labels[1:]...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "recovery_time_secs", "Agent recovery time in seconds",
+			subLabels...): func(m metricMap, c prometheus.Collector) error {
 			age, ok := m["slave/recovery_time_secs"]
 			if !ok {
 				log.WithField("metric", "slave/recovery_time_secs").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("", sAtt, subLabels)...).Set(age)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("", sAtt, subLabels)...).Set(age)
 			return nil
 		},
-		gauge("slave", "executor_directory_max_allowed_age_secs", "Max allowed age of the executor directory", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "executor_directory_max_allowed_age_secs",
+			"Max allowed age of the executor directory",
+			subLabels...): func(m metricMap, c prometheus.Collector) error {
 			age, ok := m["slave/executor_directory_max_allowed_age_secs"]
 			if !ok {
 				log.WithField("metric", "slave/executor_directory_max_allowed_age_secs").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(age)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("", sAtt, subLabels)...).Set(age)
 			return nil
 		},
 
-		// TODO ...... bug
 		// Slave stats about frameworks and executors
-		gauge("slave", "executor_state", "Current number of executors by state.", "state", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "executor_state", "Current number of executors by state.",
+			append([]string{"state"}, defaultLabels[1:]...)...): func(m metricMap, c prometheus.Collector) error {
 			registering, ok := m["slave/executors_registering"]
 			if !ok {
 				log.WithField("metric", "slave/executors_registering").Warn(LogErrNotFoundInMap)
@@ -255,43 +277,46 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/executors_terminating").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues("registering", hostname).Set(registering)
-			c.(*prometheus.GaugeVec).WithLabelValues("running", hostname).Set(running)
-			c.(*prometheus.GaugeVec).WithLabelValues("terminating", hostname).Set(terminating)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("registering", sAtt, subLabels)...).Set(registering)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("running", sAtt, subLabels)...).Set(running)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("terminating", sAtt, subLabels)...).Set(terminating)
 			return nil
 		},
-		gauge("slave", "frameworks_active", "Current number of active frameworks", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "frameworks_active", "Current number of active frameworks",
+			subLabels...): func(m metricMap, c prometheus.Collector) error {
 			active, ok := m["slave/frameworks_active"]
 			if !ok {
 				log.WithField("metric", "slave/frameworks_active").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(active)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("", sAtt, subLabels)...).Set(active)
 			return nil
 		},
 		counter("slave",
 			"executors_terminated",
-			"Total number of executor terminations.", labels[1:]...): func(m metricMap, c prometheus.Collector) error {
+			"Total number of executor terminations.", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			terminated, ok := m["slave/executors_terminated"]
 			if !ok {
 				log.WithField("metric", "slave/executors_terminated").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(terminated, addValuesFromMap("", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(terminated, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
 		counter("slave",
 			"executors_preempted",
-			"Total number of executor preemptions.", labels[1:]...): func(m metricMap, c prometheus.Collector) error {
+			"Total number of executor preemptions.", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			preempted, ok := m["slave/executors_preempted"]
 			if !ok {
 				log.WithField("metric", "slave/executors_preempted").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(preempted, addValuesFromMap("", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(preempted, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
 
 		// TODO bug
 		// Slave stats about tasks
-		counter("slave", "task_states_exit_total", "Total number of tasks processed by exit state.", "state", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		counter("slave", "task_states_exit_total",
+			"Total number of tasks processed by exit state.",
+			append([]string{"state"}, defaultLabels[1:]...)...): func(m metricMap, c prometheus.Collector) error {
 			errored, ok := m["slave/tasks_error"]
 			if !ok {
 				log.WithField("metric", "slave/tasks_error").Warn(LogErrNotFoundInMap)
@@ -318,16 +343,17 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 				log.WithField("metric", "slave/tasks_lost").Warn(LogErrNotFoundInMap)
 			}
 
-			c.(*settableCounterVec).Set(errored, "errored", hostname)
-			c.(*settableCounterVec).Set(failed, "failed", hostname)
-			c.(*settableCounterVec).Set(finished, "finished", hostname)
-			c.(*settableCounterVec).Set(gone, "gone", hostname)
-			c.(*settableCounterVec).Set(killed, "killed", hostname)
-			c.(*settableCounterVec).Set(lost, "lost", hostname)
+			c.(*settableCounterVec).Set(errored, addValueFromMap("errored", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(failed, addValueFromMap("failed", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(finished, addValueFromMap("finished", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(gone, addValueFromMap("gone", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(killed, addValueFromMap("killed", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(lost, addValueFromMap("lost", sAtt, subLabels)...)
 
 			return nil
 		},
-		counter("slave", "task_states_current", "Current number of tasks by state.", "state", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		counter("slave", "task_states_current", "Current number of tasks by state.",
+			append([]string{"state"}, defaultLabels[1:]...)...): func(m metricMap, c prometheus.Collector) error {
 			running, ok := m["slave/tasks_running"]
 			if !ok {
 				log.WithField("metric", "slave/tasks_running").Warn(LogErrNotFoundInMap)
@@ -345,16 +371,17 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 				log.WithField("metric", "slave/tasks_killing").Warn(LogErrNotFoundInMap)
 			}
 
-			c.(*settableCounterVec).Set(killing, "killing", hostname)
-			c.(*settableCounterVec).Set(running, "running", hostname)
-			c.(*settableCounterVec).Set(staging, "staging", hostname)
-			c.(*settableCounterVec).Set(starting, "starting", hostname)
+			c.(*settableCounterVec).Set(killing, addValueFromMap("killing", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(running, addValueFromMap("running", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(staging, addValueFromMap("staging", sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(starting, addValueFromMap("starting", sAtt, subLabels)...)
 
 			return nil
 		},
 
 		// TODO ...
-		counter("slave", "task_state_counts_by_source_reason", "Number of task states by source and reason", "state", "source", "reason", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		counter("slave", "task_state_counts_by_source_reason", "Number of task states by source and reason",
+			append([]string{"state", "source", "reason"}, defaultLabels[1:]...)...): func(m metricMap, c prometheus.Collector) error {
 			re, err := regexp.Compile("slave/task_(.*?)/source_(.*?)/reason_(.*?)$")
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -372,7 +399,7 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 				state := matches[1]
 				source := matches[2]
 				reason := matches[3]
-				c.(*settableCounterVec).Set(value, state, source, reason, hostname)
+				c.(*settableCounterVec).Set(value, addValuesFromMap([]string{state, source, reason}, sAtt, subLabels)...)
 			}
 			return nil
 		},
@@ -380,7 +407,7 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 		// Slave stats about messages
 		counter("slave", "messages_outcomes_total",
 			"Total number of messages by outcome of operation",
-			"type", "outcome", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			append([]string{"type", "outcome"}, defaultLabels[1:]...)...): func(m metricMap, c prometheus.Collector) error {
 
 			frameworkMessagesValid, ok := m["slave/valid_framework_messages"]
 			if !ok {
@@ -398,26 +425,28 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "slave/invalid_status_updates").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(frameworkMessagesValid, "framework", "valid", hostname)
-			c.(*settableCounterVec).Set(frameworkMessagesInvalid, "framework", "invalid", hostname)
-			c.(*settableCounterVec).Set(statusUpdateValid, "status", "valid", hostname)
-			c.(*settableCounterVec).Set(statusUpdateInvalid, "status", "invalid", hostname)
+			c.(*settableCounterVec).Set(frameworkMessagesValid, addValuesFromMap([]string{"framework", "valid"}, sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(frameworkMessagesInvalid, addValuesFromMap([]string{"framework", "invalid"}, sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(statusUpdateValid, addValuesFromMap([]string{"status", "valid"}, sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(statusUpdateInvalid, addValuesFromMap([]string{"status", "invalid"}, sAtt, subLabels)...)
 
 			return nil
 		},
 
 		// GC information
-		gauge("slave", "gc_path_removals_pending", "Number of sandbox paths that are currently pending agent garbage collection", "hostname"): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "gc_path_removals_pending",
+			"Number of sandbox paths that are currently pending agent garbage collection",
+			subLabels...): func(m metricMap, c prometheus.Collector) error {
 			pending, ok := m["gc/path_removals_pending"]
 			if !ok {
 				log.WithField("metric", "gc/path_removals_pending").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(pending)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("", sAtt, subLabels)...).Set(pending)
 			return nil
 		},
 		counter("slave", "gc_path_removals_outcome",
 			"Number of sandbox paths the agent removed",
-			"outcome", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			append([]string{"outcome"}, defaultLabels[1:]...)...): func(m metricMap, c prometheus.Collector) error {
 
 			succeeded, ok := m["gc/path_removals_succeeded"]
 			if !ok {
@@ -427,8 +456,8 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "gc/path_removals_failed").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(succeeded, "success", hostname)
-			c.(*settableCounterVec).Set(failed, "failed", hostname)
+			c.(*settableCounterVec).Set(succeeded, addValuesFromMap([]string{"success"}, sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(failed, addValuesFromMap([]string{"failed"}, sAtt, subLabels)...)
 
 			return nil
 		},
@@ -436,57 +465,57 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 		// Container / Containerizer information
 		counter("slave",
 			"container_launch_errors",
-			"Total number of container launch errors", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			"Total number of container launch errors", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			errors, ok := m["slave/container_launch_errors"]
 			if !ok {
 				log.WithField("metric", "slave/container_launch_errors").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(errors, hostname)
+			c.(*settableCounterVec).Set(errors, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
 		counter("slave",
 			"containerizer_filesystem_containers_new_rootfs",
-			"Number of containers changing root filesystem", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			"Number of containers changing root filesystem", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			newRootfs, ok := m["containerizer/mesos/filesystem/containers_new_rootfs"]
 			if !ok {
 				log.WithField("metric", "containerizer/mesos/filesystem/containers_new_rootfs").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(newRootfs, hostname)
+			c.(*settableCounterVec).Set(newRootfs, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
 		counter("slave",
 			"containerizer_provisioner_bind_remove_rootfs_errors",
-			"Number of errors from the containerizer attempting to bind the rootfs", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			"Number of errors from the containerizer attempting to bind the rootfs", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			errors, ok := m["containerizer/mesos/provisioner/bind/remove_rootfs_errors"]
 			if !ok {
 				log.WithField("metric", "containerizer/mesos/provisioner/bind/remove_rootfs_errors").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(errors, hostname)
+			c.(*settableCounterVec).Set(errors, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
 		counter("slave",
 			"containerizer_provisioner_remove_container_errors",
-			"Number of errors from the containerizer attempting to remove a container", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			"Number of errors from the containerizer attempting to remove a container", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			errors, ok := m["containerizer/mesos/provisioner/remove_container_errors"]
 			if !ok {
 				log.WithField("metric", "containerizer/mesos/provisioner/remove_container_errors").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(errors, hostname)
+			c.(*settableCounterVec).Set(errors, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
 		counter("slave",
 			"containerizer_container_destroy_errors",
-			"Number of containers destroyed due to launch errors", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			"Number of containers destroyed due to launch errors", subLabels...): func(m metricMap, c prometheus.Collector) error {
 			errors, ok := m["containerizer/mesos/container_destroy_errors"]
 			if !ok {
 				log.WithField("metric", "containerizer/mesos/container_destroy_errors").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(errors, hostname)
+			c.(*settableCounterVec).Set(errors, addValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
 		counter("slave", "containerizer_fetcher_task_fetches",
 			"Total number of containerizer fetcher tasks by outcome",
-			"outcome", "hostname"): func(m metricMap, c prometheus.Collector) error {
+			append([]string{"outcome"}, defaultLabels[1:]...)...): func(m metricMap, c prometheus.Collector) error {
 
 			succeeded, ok := m["containerizer/fetcher/task_fetches_succeeded"]
 			if !ok {
@@ -496,12 +525,12 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "containerizer/fetcher/task_fetches_failed").Warn(LogErrNotFoundInMap)
 			}
-			c.(*settableCounterVec).Set(succeeded, "success", hostname)
-			c.(*settableCounterVec).Set(failed, "failed", hostname)
+			c.(*settableCounterVec).Set(succeeded, addValuesFromMap([]string{"success"}, sAtt, subLabels)...)
+			c.(*settableCounterVec).Set(failed, addValuesFromMap([]string{"failed"}, sAtt, subLabels)...)
 
 			return nil
 		},
-		gauge("slave", "containerizer_fetcher_cache_size", "Containerizer fetcher cache sizes in bytes", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "containerizer_fetcher_cache_size", "Containerizer fetcher cache sizes in bytes", defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			total, ok := m["containerizer/fetcher/cache_size_total_bytes"]
 			if !ok {
 				log.WithField("metric", "containerizer/fetcher/cache_size_total_bytes").Warn(LogErrNotFoundInMap)
@@ -510,12 +539,12 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "containerizer/fetcher/cache_size_used_bytes").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(used)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(total - used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(used)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(total - used)
 			return nil
 		},
-		gauge("slave", "containerizer_xfs_project_ids", "Number of project IDs available for the XFS disk isolator", labels...): func(m metricMap, c prometheus.Collector) error {
+		gauge("slave", "containerizer_xfs_project_ids", "Number of project IDs available for the XFS disk isolator", defaultLabels...): func(m metricMap, c prometheus.Collector) error {
 			total, ok := m["containerizer/mesos/disk/project_ids_total"]
 			if !ok {
 				log.WithField("metric", "containerizer/mesos/disk/project_ids_total").Warn(LogErrNotFoundInMap)
@@ -524,9 +553,9 @@ func newSlaveCollector(httpClient *httpClient, attributs map[string]json.RawMess
 			if !ok {
 				log.WithField("metric", "containerizer/mesos/disk/project_ids_free").Warn(LogErrNotFoundInMap)
 			}
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("total", sAtt, subLabels)...).Set(total)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("used", sAtt, subLabels)...).Set(total - free)
-			c.(*prometheus.GaugeVec).WithLabelValues(addValuesFromMap("free", sAtt, subLabels)...).Set(free)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("total", sAtt, subLabels)...).Set(total)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("used", sAtt, subLabels)...).Set(total - free)
+			c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap("free", sAtt, subLabels)...).Set(free)
 			return nil
 		},
 

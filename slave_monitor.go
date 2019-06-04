@@ -58,13 +58,28 @@ type (
 	}
 
 	metric struct {
-		valueType prometheus.ValueType
-		get       func(*statistics) float64
+		valueType 	prometheus.ValueType
+		get       	func(*statistics) float64
+		labelNames  []string
+		labelValues prometheus.Labels
 	}
 )
 
-func newSlaveMonitorCollector(httpClient *httpClient, attributs map[string]json.RawMessage, userTaskLabelList []string, slaveAttributeLabelList []string) prometheus.Collector {
-	labels := []string{"id", "framework_id", "source", "hostname"}
+func newSlaveMonitorCollector(httpClient *httpClient, attr map[string]json.RawMessage, userTaskLabelList []string, slaveAttributeLabelList []string) prometheus.Collector {
+	labels := []string{"id", "framework_id", "source"}
+	labelNames := append(labels, normaliseLabelList(slaveAttributeLabelList)...)
+	attrLabels := prometheus.Labels{}
+	for _, label := range labelNames {
+		attrLabels[label] = ""
+	}
+	for key, value := range attr {
+		normalisedLabel := normaliseLabel(key)
+		if stringInSlice(normalisedLabel, labelNames) {
+			if attribute, err := attributeString(value); err == nil {
+				attrLabels[normalisedLabel] = attribute
+			}
+		}
+	}
 
 	return &slaveCollector{
 		httpClient: httpClient,
@@ -73,163 +88,194 @@ func newSlaveMonitorCollector(httpClient *httpClient, attributs map[string]json.
 			prometheus.NewDesc(
 				"mesos_agent_processes",
 				"Current number of processes",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.Processes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue,
+				func(s *statistics) float64 { return s.Processes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_threads",
 				"Current number of threads",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.Threads }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.Threads },
+				labelNames, attrLabels},
 
 			// CPU
 			prometheus.NewDesc(
 				"mesos_agent_cpus_limit",
 				"Current limit of CPUs for task",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.CpusLimit }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.CpusLimit },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_cpu_system_seconds_total",
 				"Total system CPU seconds",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusSystemTimeSecs }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusSystemTimeSecs },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_cpu_user_seconds_total",
 				"Total user CPU seconds",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusUserTimeSecs }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusUserTimeSecs },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_cpu_throttled_seconds_total",
 				"Total time CPU was throttled due to CFS bandwidth control",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusThrottledTimeSecs }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusThrottledTimeSecs },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_cpu_nr_periods_total",
 				"Total number of elapsed CFS enforcement intervals",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusNrPeriods }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusNrPeriods },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_cpu_nr_throttled_total",
 				"Total number of throttled CFS enforcement intervals.",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusNrThrottled }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.CpusNrThrottled },
+				labelNames, attrLabels},
 
 			// Memory
 			prometheus.NewDesc(
 				"mesos_agent_mem_anon_bytes",
 				"Current anonymous memory in bytes",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemAnonBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemAnonBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_limit_bytes",
 				"Current memory limit in bytes",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemLimitBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemLimitBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_rss_bytes",
 				"Current rss memory usage",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemRssBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemRssBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_total_bytes",
 				"Current total memory usage",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemTotalBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemTotalBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_cache_bytes",
 				"Current page cache memory usage",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemCacheBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemCacheBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_swap_bytes",
 				"Current swap usage",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemSwapBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemSwapBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_file_bytes",
 				"Current file bytes count",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemFileBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemFileBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_mapped_file_bytes",
 				"Current memory mapped file bytes count",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemMappedFileBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemMappedFileBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_unevictable_bytes",
 				"Current memory unevictable bytes count",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemUnevictableBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.MemUnevictableBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_low_pressure_counter",
 				"Low pressure counter value",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.MemLowPressureCounter }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.MemLowPressureCounter },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_mem_medium_pressure_counter",
 				"Medium pressure counter value",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.MemMediumPressureCounter }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.MemMediumPressureCounter },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_critical_low_pressure_counter",
 				"Critical pressure counter value",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.MemCriticalPressureCounter }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.MemCriticalPressureCounter },
+				labelNames, attrLabels},
 
 			// Disk
 			prometheus.NewDesc(
 				"mesos_agent_disk_limit_bytes",
 				"Current disk limit in bytes",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.DiskLimitBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.DiskLimitBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_disk_used_bytes",
 				"Current disk usage",
-				labels, nil,
-			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.DiskUsedBytes }},
+				labelNames, nil,
+			): metric{prometheus.GaugeValue, func(s *statistics) float64 { return s.DiskUsedBytes },
+				labelNames, attrLabels},
 
 			// Network
 			// - RX
 			prometheus.NewDesc(
 				"mesos_agent_network_receive_bytes_total",
 				"Total bytes received",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxBytes }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_network_receive_dropped_total",
 				"Total packets dropped while receiving",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxDropped }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxDropped },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_network_receive_errors_total",
 				"Total errors while receiving",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxErrors }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxErrors },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_network_receive_packets_total",
 				"Total packets received",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxPackets }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetRxPackets },
+				labelNames, attrLabels},
 			// - TX
 			prometheus.NewDesc(
 				"mesos_agent_network_transmit_bytes_total",
 				"Total bytes transmitted",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxBytes }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxBytes },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_network_transmit_dropped_total",
 				"Total packets dropped while transmitting",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxDropped }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxDropped },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_network_transmit_errors_total",
 				"Total errors while transmitting",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxErrors }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxErrors },
+				labelNames, attrLabels},
 			prometheus.NewDesc(
 				"mesos_agent_network_transmit_packets_total",
 				"Total packets transmitted",
-				labels, nil,
-			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxPackets }},
+				labelNames, nil,
+			): metric{prometheus.CounterValue, func(s *statistics) float64 { return s.NetTxPackets },
+				labelNames, attrLabels},
 		},
 	}
 }
@@ -241,7 +287,11 @@ func (c *slaveCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, exec := range stats {
 		for desc, m := range c.metrics {
 			// log.Debugf("%s -> %s", desc, httpClient.hostname)
-			ch <- prometheus.MustNewConstMetric(desc, m.valueType, m.get(exec.Statistics), exec.ID, exec.FrameworkID, exec.Source, c.httpClient.hostname)
+			m.labelValues["id"] = exec.ID
+			m.labelValues["framework_id"] = exec.FrameworkID
+			m.labelValues["source"] = exec.Source
+			ch <- prometheus.MustNewConstMetric(desc, m.valueType, m.get(exec.Statistics),
+				getLabelValuesFromMap(m.labelValues, m.labelNames)...)
 		}
 	}
 }
