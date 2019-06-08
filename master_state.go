@@ -42,6 +42,14 @@ type (
 
 func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []string) prometheus.Collector {
 	labels := []string{"slave"}
+	normalisedAttributeLabels := normaliseLabelList(slaveAttributeLabels)
+	labels = append(labels, normalisedAttributeLabels...)
+	slaveAttributes := prometheus.Labels{}
+
+	for _, label := range normalisedAttributeLabels {
+		slaveAttributes[label] = ""
+	}
+
 	metrics := map[prometheus.Collector]func(*state, prometheus.Collector){
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Help:      "Total slave CPUs (fractional)",
@@ -50,7 +58,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "cpus",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Total.CPUs)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Total.CPUs)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -60,7 +69,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "cpus_used",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Used.CPUs)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Used.CPUs)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -70,7 +80,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "cpus_unreserved",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Unreserved.CPUs)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Unreserved.CPUs)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -80,7 +91,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "mem_bytes",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Total.Mem * 1024)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Total.Mem * 1024)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -90,7 +102,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "mem_used_bytes",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Used.Mem * 1024)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Used.Mem * 1024)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -100,7 +113,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "mem_unreserved_bytes",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Unreserved.Mem * 1024)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Unreserved.Mem * 1024)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -110,7 +124,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "disk_bytes",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Total.Disk * 1024)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Total.Disk * 1024)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -120,7 +135,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "disk_used_bytes",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Used.Disk * 1024)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Used.Disk * 1024)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -130,7 +146,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 			Name:      "disk_unreserved_bytes",
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(s.Unreserved.Disk * 1024)
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(s.Unreserved.Disk * 1024)
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -141,7 +158,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				size := s.Total.Ports.size()
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(float64(size))
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(float64(size))
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -152,7 +170,8 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				size := s.Used.Ports.size()
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(float64(size))
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(float64(size))
 			}
 		},
 		prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -163,14 +182,15 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 		}, labels): func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				size := s.Unreserved.Ports.size()
-				c.(*prometheus.GaugeVec).WithLabelValues(s.PID).Set(float64(size))
+				setAttributes(s, normalisedAttributeLabels, slaveAttributes)
+				c.(*prometheus.GaugeVec).WithLabelValues(addValueFromMap(s.PID, slaveAttributes, normalisedAttributeLabels)...).Set(float64(size))
 			}
 		},
 	}
 
 	if len(slaveAttributeLabels) > 0 {
 		normalisedAttributeLabels := normaliseLabelList(slaveAttributeLabels)
-		slaveAttributesLabelsExport := append(labels, normalisedAttributeLabels...)
+		slaveAttributesLabelsExport := append([]string{"slave"}, normalisedAttributeLabels...)
 
 		metrics[counter("slave", "attributes", "Attributes assigned to slaves", slaveAttributesLabelsExport...)] = func(st *state, c prometheus.Collector) {
 			for _, s := range st.Slaves {
@@ -198,6 +218,17 @@ func newMasterStateCollector(httpClient *httpClient, slaveAttributeLabels []stri
 	return &masterCollector{
 		httpClient: httpClient,
 		metrics:    metrics,
+	}
+}
+
+func setAttributes(s slave, normalisedAttributeLabels []string, slaveAttributes prometheus.Labels) {
+	for key, value := range s.Attributes {
+		normalisedLabel := normaliseLabel(key)
+		if stringInSlice(normalisedLabel, normalisedAttributeLabels) {
+			if attribute, err := attributeString(value); err == nil {
+				slaveAttributes[normalisedLabel] = attribute
+			}
+		}
 	}
 }
 

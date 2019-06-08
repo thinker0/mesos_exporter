@@ -45,8 +45,7 @@ type (
 func newSlaveStateCollector(httpClient *httpClient, s slaveState, userTaskLabelList []string, slaveAttributeLabelList []string) *slaveStateCollector {
 	c := slaveStateCollector{httpClient, make(map[*prometheus.Desc]slaveMetric)}
 
-	hostname := httpClient.hostname
-	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name", "hostname"}
+	defaultTaskLabels := []string{"source", "framework_id", "executor_id", "task_id", "task_name"}
 	normalisedUserTaskLabelList := normaliseLabelList(userTaskLabelList)
 	taskLabelList := append(defaultTaskLabels, normalisedUserTaskLabelList...)
 	normalisedAttributeLabels := normaliseLabelList(slaveAttributeLabelList)
@@ -69,7 +68,6 @@ func newSlaveStateCollector(httpClient *httpClient, s slaveState, userTaskLabelL
 							"executor_id":  e.ID,
 							"task_id":      t.ID,
 							"task_name":    t.Name,
-							"hostname":     hostname,
 						}
 
 						// User labels
