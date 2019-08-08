@@ -67,7 +67,8 @@ type (
 
 func newSlaveMonitorCollector(httpClient *httpClient, attr map[string]json.RawMessage, userTaskLabelList []string, slaveAttributeLabelList []string) prometheus.Collector {
 	labels := []string{"id", "framework_id", "source"}
-	labelNames := append(labels, normaliseLabelList(slaveAttributeLabelList)...)
+	addLabels := append(userTaskLabelList, slaveAttributeLabelList...)
+	labelNames := append(labels, normaliseLabelList(addLabels)...)
 	attrLabels := prometheus.Labels{}
 	for _, label := range labelNames {
 		attrLabels[label] = ""
