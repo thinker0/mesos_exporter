@@ -12,7 +12,7 @@ import (
 func addValueFromMap(t string, labels prometheus.Labels, orderedLabelKeys []string) []string {
 	var labelValues []string
 	if len(t) > 0 {
-		labelValues = append (labelValues, t)
+		labelValues = append(labelValues, t)
 	}
 	for _, label := range orderedLabelKeys {
 		labelValues = append(labelValues, labels[label])
@@ -23,7 +23,7 @@ func addValueFromMap(t string, labels prometheus.Labels, orderedLabelKeys []stri
 func addValuesFromMap(t []string, labels prometheus.Labels, orderedLabelKeys []string) []string {
 	var labelValues []string
 	if len(t) > 0 {
-		labelValues = append (labelValues, t...)
+		labelValues = append(labelValues, t...)
 	}
 	for _, label := range orderedLabelKeys {
 		labelValues = append(labelValues, labels[label])
