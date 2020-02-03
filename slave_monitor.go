@@ -58,15 +58,15 @@ type (
 	}
 
 	metric struct {
-		valueType 	prometheus.ValueType
-		get       	func(*statistics) float64
+		valueType   prometheus.ValueType
+		get         func(*statistics) float64
 		labelNames  []string
 		labelValues prometheus.Labels
 	}
 )
 
 func newSlaveMonitorCollector(httpClient *httpClient, attr map[string]json.RawMessage, userTaskLabelList []string, slaveAttributeLabelList []string) prometheus.Collector {
-	labels := []string{"id", "framework_id", "source"}
+	labels := []string{"framework_id", "source"}
 	addLabels := append(userTaskLabelList, slaveAttributeLabelList...)
 	labelNames := append(labels, normaliseLabelList(addLabels)...)
 	attrLabels := prometheus.Labels{}
@@ -288,7 +288,6 @@ func (c *slaveCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, exec := range stats {
 		for desc, m := range c.metrics {
 			// log.Debugf("%s -> %s", desc, httpClient.hostname)
-			m.labelValues["id"] = exec.ID
 			m.labelValues["framework_id"] = exec.FrameworkID
 			m.labelValues["source"] = exec.Source
 			ch <- prometheus.MustNewConstMetric(desc, m.valueType, m.get(exec.Statistics),
