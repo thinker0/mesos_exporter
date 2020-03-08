@@ -6,6 +6,3 @@ mesos_exporter
 vendor/*
 Gopkg.lock
 Gopkg.toml
-go.mod
-go.sum
-mesos_exporter-1
