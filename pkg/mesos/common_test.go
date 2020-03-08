@@ -1,0 +1,26 @@
+package mesos
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+func Example_attributeString() {
+	tests := []string{
+		`"text"`,
+		"6",
+		"9.3",
+		"[9-12]",
+		"{a: b}",
+	}
+	for _, test := range tests {
+		s, err := attributeString(json.RawMessage(test))
+		fmt.Println(s, err)
+	}
+	// Output:
+	// text <nil>
+	// 6 <nil>
+	// 9.3 <nil>
+	//  value neither scalar nor text
+	//  value neither scalar nor text
+}
