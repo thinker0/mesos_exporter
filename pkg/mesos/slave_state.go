@@ -52,7 +52,7 @@ func NewSlaveStateCollector(httpClient *HttpClient, s SlaveState, userTaskLabelL
 	taskLabelList = append(defaultTaskLabels, normalisedAttributeLabels...)
 
 	c.metrics[prometheus.NewDesc(
-		prometheus.BuildFQName("mesos", "Slave", "task_labels"),
+		prometheus.BuildFQName("mesos", "slave", "task_labels"),
 		"Labels assigned to tasks running on slaves",
 		taskLabelList,
 		nil)] = SlaveMetric{prometheus.CounterValue,
@@ -104,7 +104,7 @@ func NewSlaveStateCollector(httpClient *HttpClient, s SlaveState, userTaskLabelL
 		normalisedAttributeLabels := normaliseLabelList(slaveAttributeLabelList)
 
 		c.metrics[prometheus.NewDesc(
-			prometheus.BuildFQName("mesos", "Slave", "attributes"),
+			prometheus.BuildFQName("mesos", "slave", "attributes"),
 			"Attributes assigned to slaves",
 			normalisedAttributeLabels,
 			nil)] = SlaveMetric{prometheus.CounterValue,
