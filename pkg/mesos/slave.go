@@ -29,7 +29,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 
 	metrics := map[prometheus.Collector]func(MetricMap, prometheus.Collector) error{
 		// CPU/Disk/Mem Resources in free/used
-		gauge("Slave", "cpus", "Current CPU Resources in cluster.",
+		gauge("slave", "cpus", "Current CPU Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/cpus_percent"]
 			if !ok {
@@ -56,7 +56,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("Slave", "cpus_revocable", "Current revocable CPU Resources in cluster.",
+		gauge("slave", "cpus_revocable", "Current revocable CPU Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/cpus_revocable_percent"]
 			if !ok {
@@ -82,7 +82,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("Slave", "mem", "Current memory Resources in cluster.",
+		gauge("slave", "mem", "Current memory Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/mem_percent"]
 			if !ok {
@@ -108,7 +108,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("Slave", "mem_revocable", "Current revocable memory Resources in cluster.",
+		gauge("slave", "mem_revocable", "Current revocable memory Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/mem_revocable_percent"]
 			if !ok {
@@ -134,7 +134,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("Slave", "gpus", "Current GPU Resources in cluster.",
+		gauge("slave", "gpus", "Current GPU Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/gpus_percent"]
 			if !ok {
@@ -160,7 +160,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("Slave", "gpus_revocable", "Current revocable GPUS Resources in cluster.",
+		gauge("slave", "gpus_revocable", "Current revocable GPUS Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/gpus_revocable_percent"]
 			if !ok {
@@ -186,7 +186,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("Slave", "disk", "Current disk Resources in cluster.",
+		gauge("slave", "disk", "Current disk Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/disk_percent"]
 			if !ok {
@@ -212,7 +212,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("used", sAtt, subLabels)...).Set(used)
 			return nil
 		},
-		gauge("Slave", "disk_revocable", "Current disk Resources in cluster.",
+		gauge("slave", "disk_revocable", "Current disk Resources in cluster.",
 			defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["Slave/disk_revocable_percent"]
 			if !ok {
@@ -240,7 +240,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 		},
 
 		// Slave stats about uptime and connectivity
-		gauge("Slave", "registered", "1 if Slave is registered with master, 0 if not.",
+		gauge("slave", "registered", "1 if Slave is registered with master, 0 if not.",
 			subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			registered, ok := m["Slave/registered"]
 			if !ok {
@@ -251,7 +251,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("", sAtt, subLabels)...).Set(registered)
 			return nil
 		},
-		gauge("Slave", "uptime_seconds", "Number of seconds the Slave process is running.",
+		gauge("slave", "uptime_seconds", "Number of seconds the Slave process is running.",
 			subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			uptime, ok := m["Slave/uptime_secs"]
 			if !ok {
@@ -262,7 +262,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("", sAtt, subLabels)...).Set(uptime)
 			return nil
 		},
-		counter("Slave",
+		counter("slave",
 			"recovery_errors",
 			"Total number of recovery errors", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			errors, ok := m["Slave/recovery_errors"]
@@ -274,7 +274,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*SettableCounterVec).Set(errors, AddValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		gauge("Slave", "recovery_time_secs", "Agent recovery time in seconds",
+		gauge("slave", "recovery_time_secs", "Agent recovery time in seconds",
 			subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			age, ok := m["Slave/recovery_time_secs"]
 			if !ok {
@@ -285,7 +285,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("", sAtt, subLabels)...).Set(age)
 			return nil
 		},
-		gauge("Slave", "executor_directory_max_allowed_age_secs",
+		gauge("slave", "executor_directory_max_allowed_age_secs",
 			"Max allowed age of the Executor directory",
 			subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			age, ok := m["Slave/executor_directory_max_allowed_age_secs"]
@@ -299,7 +299,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 		},
 
 		// Slave stats about frameworks and executors
-		gauge("Slave", "executor_state", "Current number of executors by State.",
+		gauge("slave", "executor_state", "Current number of executors by State.",
 			append([]string{"State"}, defaultLabels[1:]...)...): func(m MetricMap, c prometheus.Collector) error {
 			registering, ok := m["Slave/executors_registering"]
 			if !ok {
@@ -324,7 +324,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("terminating", sAtt, subLabels)...).Set(terminating)
 			return nil
 		},
-		gauge("Slave", "frameworks_active", "Current number of active frameworks",
+		gauge("slave", "frameworks_active", "Current number of active frameworks",
 			subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			active, ok := m["Slave/frameworks_active"]
 			if !ok {
@@ -335,7 +335,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("", sAtt, subLabels)...).Set(active)
 			return nil
 		},
-		counter("Slave",
+		counter("slave",
 			"executors_terminated",
 			"Total number of Executor terminations.", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			terminated, ok := m["Slave/executors_terminated"]
@@ -347,7 +347,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*SettableCounterVec).Set(terminated, AddValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		counter("Slave",
+		counter("slave",
 			"executors_preempted",
 			"Total number of Executor preemptions.", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			preempted, ok := m["Slave/executors_preempted"]
@@ -362,7 +362,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 
 		// TODO bug
 		// Slave stats about tasks
-		counter("Slave", "task_states_exit_total",
+		counter("slave", "task_states_exit_total",
 			"Total number of tasks processed by exit State.",
 			append([]string{"State"}, defaultLabels[1:]...)...): func(m MetricMap, c prometheus.Collector) error {
 			errored, ok := m["Slave/tasks_error"]
@@ -412,7 +412,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 
 			return nil
 		},
-		counter("Slave", "task_states_current", "Current number of tasks by State.",
+		counter("slave", "task_states_current", "Current number of tasks by State.",
 			append([]string{"State"}, defaultLabels[1:]...)...): func(m MetricMap, c prometheus.Collector) error {
 			running, ok := m["Slave/tasks_running"]
 			if !ok {
@@ -448,7 +448,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 		},
 
 		// TODO ...
-		counter("Slave", "task_state_counts_by_source_reason", "Number of Task states by source and reason",
+		counter("slave", "task_state_counts_by_source_reason", "Number of Task states by source and reason",
 			append([]string{"State", "source", "reason"}, defaultLabels[1:]...)...): func(m MetricMap, c prometheus.Collector) error {
 			re, err := regexp.Compile("Slave/task_(.*?)/source_(.*?)/reason_(.*?)$")
 			if err != nil {
@@ -473,7 +473,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 		},
 
 		// Slave stats about messages
-		counter("Slave", "messages_outcomes_total",
+		counter("slave", "messages_outcomes_total",
 			"Total number of messages by outcome of operation",
 			append([]string{"type", "outcome"}, defaultLabels[1:]...)...): func(m MetricMap, c prometheus.Collector) error {
 
@@ -510,7 +510,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 		},
 
 		// GC information
-		gauge("Slave", "gc_path_removals_pending",
+		gauge("slave", "gc_path_removals_pending",
 			"Number of sandbox paths that are currently pending agent garbage collection",
 			subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			pending, ok := m["gc/path_removals_pending"]
@@ -522,7 +522,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("", sAtt, subLabels)...).Set(pending)
 			return nil
 		},
-		counter("Slave", "gc_path_removals_outcome",
+		counter("slave", "gc_path_removals_outcome",
 			"Number of sandbox paths the agent removed",
 			append([]string{"outcome"}, defaultLabels[1:]...)...): func(m MetricMap, c prometheus.Collector) error {
 
@@ -545,7 +545,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 		},
 
 		// Container / Containerizer information
-		counter("Slave",
+		counter("slave",
 			"container_launch_errors",
 			"Total number of container launch errors", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			errors, ok := m["Slave/container_launch_errors"]
@@ -557,7 +557,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*SettableCounterVec).Set(errors, AddValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		counter("Slave",
+		counter("slave",
 			"containerizer_filesystem_containers_new_rootfs",
 			"Number of containers changing root filesystem", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			newRootfs, ok := m["containerizer/mesos/filesystem/containers_new_rootfs"]
@@ -569,7 +569,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*SettableCounterVec).Set(newRootfs, AddValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		counter("Slave",
+		counter("slave",
 			"containerizer_provisioner_bind_remove_rootfs_errors",
 			"Number of errors from the containerizer attempting to bind the rootfs", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			errors, ok := m["containerizer/mesos/provisioner/bind/remove_rootfs_errors"]
@@ -581,7 +581,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*SettableCounterVec).Set(errors, AddValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		counter("Slave",
+		counter("slave",
 			"containerizer_provisioner_remove_container_errors",
 			"Number of errors from the containerizer attempting to remove a container", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			errors, ok := m["containerizer/mesos/provisioner/remove_container_errors"]
@@ -593,7 +593,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*SettableCounterVec).Set(errors, AddValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		counter("Slave",
+		counter("slave",
 			"containerizer_container_destroy_errors",
 			"Number of containers destroyed due to launch errors", subLabels...): func(m MetricMap, c prometheus.Collector) error {
 			errors, ok := m["containerizer/mesos/container_destroy_errors"]
@@ -605,7 +605,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*SettableCounterVec).Set(errors, AddValueFromMap("", sAtt, subLabels)...)
 			return nil
 		},
-		counter("Slave", "containerizer_fetcher_task_fetches",
+		counter("slave", "containerizer_fetcher_task_fetches",
 			"Total number of containerizer fetcher tasks by outcome",
 			append([]string{"outcome"}, defaultLabels[1:]...)...): func(m MetricMap, c prometheus.Collector) error {
 
@@ -626,7 +626,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 
 			return nil
 		},
-		gauge("Slave", "containerizer_fetcher_cache_size", "Containerizer fetcher cache sizes in bytes", defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
+		gauge("slave", "containerizer_fetcher_cache_size", "Containerizer fetcher cache sizes in bytes", defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			total, ok := m["containerizer/fetcher/cache_size_total_bytes"]
 			if !ok {
 
@@ -644,7 +644,7 @@ func NewSlaveCollector(httpClient *HttpClient, attr map[string]json.RawMessage, 
 			c.(*prometheus.GaugeVec).WithLabelValues(AddValueFromMap("free", sAtt, subLabels)...).Set(total - used)
 			return nil
 		},
-		gauge("Slave", "containerizer_xfs_project_ids", "Number of project IDs available for the XFS disk isolator", defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
+		gauge("slave", "containerizer_xfs_project_ids", "Number of project IDs available for the XFS disk isolator", defaultLabels...): func(m MetricMap, c prometheus.Collector) error {
 			total, ok := m["containerizer/mesos/disk/project_ids_total"]
 			if !ok {
 

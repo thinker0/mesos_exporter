@@ -192,7 +192,7 @@ func NewMasterStateCollector(httpClient *HttpClient, slaveAttributeLabels []stri
 		normalisedAttributeLabels := normaliseLabelList(slaveAttributeLabels)
 		slaveAttributesLabelsExport := append([]string{"Slave"}, normalisedAttributeLabels...)
 
-		metrics[counter("Slave", "attributes", "Attributes assigned to slaves", slaveAttributesLabelsExport...)] = func(st *State, c prometheus.Collector) {
+		metrics[counter("slave", "attributes", "Attributes assigned to slaves", slaveAttributesLabelsExport...)] = func(st *State, c prometheus.Collector) {
 			for _, s := range st.Slaves {
 				slaveAttributesExport := prometheus.Labels{
 					"Slave": s.PID,
