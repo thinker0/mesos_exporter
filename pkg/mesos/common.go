@@ -290,7 +290,10 @@ func (httpClient *HttpClient) fetchAndDecodeInternal(endpoint string, target int
 		ErrorCounter.Inc()
 		return false
 	}
-	defer res.Body.Close()
+	defer func() {
+		io.Copy(io.Discard, res.Body)
+		res.Body.Close()
+	}()
 
 	if res.StatusCode != http.StatusOK {
 		if allowFallback {

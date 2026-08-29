@@ -75,7 +75,9 @@ func mkHTTPClient(hostname string, url string, timeout time.Duration, auth mesos
 	if auth.Username != "" && auth.Password != "" {
 		// Auth information is only available in the current context -> use lambda function
 		redirectFunc = func(req *http.Request, via []*http.Request) error {
-			req.SetBasicAuth(auth.Username, auth.Password)
+			if len(via) > 0 && req.URL.Host == via[0].URL.Host {
+				req.SetBasicAuth(auth.Username, auth.Password)
+			}
 			return nil
 		}
 	}
@@ -106,9 +108,8 @@ func parsePrivateKey(httpClient *mesos.HttpClient) []byte {
 		var key mesos.MesosSecret
 		if err := json.NewDecoder(buffer).Decode(&key); err != nil {
 			log.WithFields(log.Fields{
-				"key":   key,
 				"error": err,
-			}).Error("Error decoding prviate key")
+			}).Error("Error decoding private key")
 			mesos.ErrorCounter.Inc()
 			return []byte{}
 		}
@@ -181,12 +182,18 @@ func agentsDiscover(masterURL string, timeout time.Duration, auth mesos.AuthInfo
 
 	log.Infof("current master at: %s", stateURL)
 
-	resp, err := http.Get(stateURL)
+	client := &http.Client{
+		Timeout: timeout,
+	}
+	resp, err := client.Get(stateURL)
 	if err != nil {
 		log.WithField("discover", stateURL).Error(err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+	}()
 
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
