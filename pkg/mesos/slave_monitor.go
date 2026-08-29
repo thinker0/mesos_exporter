@@ -283,7 +283,7 @@ func NewSlaveMonitorCollector(httpClient *HttpClient, attr map[string]json.RawMe
 
 func (c *SlaveCollector) Collect(ch chan<- prometheus.Metric) {
 	stats := []Executor{}
-	c.FetchAndDecode("/monitor/Statistics", &stats)
+	c.FetchAndDecode("/monitor/statistics", &stats)
 
 	for _, exec := range stats {
 		for desc, m := range c.Metrics {

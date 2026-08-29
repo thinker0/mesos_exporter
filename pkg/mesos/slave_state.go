@@ -132,8 +132,8 @@ func NewSlaveStateCollector(httpClient *HttpClient, s SlaveState, userTaskLabelL
 
 func (c *SlaveStateCollector) Collect(ch chan<- prometheus.Metric) {
 	var s SlaveState
-	log.WithField("Url", "/Slave(1)/State").Debug("fetching URL")
-	c.FetchAndDecode("/Slave(1)/State", &s)
+	log.WithField("Url", "/slave(1)/state").Debug("fetching URL")
+	c.FetchAndDecode("/slave(1)/state", &s)
 	for d, cm := range c.metrics {
 		for _, m := range cm.value(&s) {
 			// log.Debugf("%s -> %s", d, m.labels)

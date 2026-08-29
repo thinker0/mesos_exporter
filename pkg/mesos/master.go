@@ -15,15 +15,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "cpus", "Current CPU Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/cpus_percent"]
 			if !ok {
-				log.WithField("Metric", "master/cpus_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/cpus_percent not found in map")
+
 			}
 			total, ok := m["master/cpus_total"]
 			if !ok {
-				log.WithField("Metric", "master/cpus_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/cpus_total not found in map")
+
 			}
 			used, ok := m["master/cpus_used"]
 			if !ok {
-				log.WithField("Metric", "master/cpus_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/cpus_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -34,15 +40,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "cpus_revocable", "Current revocable CPU Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/cpus_revocable_percent"]
 			if !ok {
-				log.WithField("Metric", "master/cpus_revocable_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/cpus_revocable_percent not found in map")
+
 			}
 			total, ok := m["master/cpus_revocable_total"]
 			if !ok {
-				log.WithField("Metric", "master/cpus_revocable_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/cpus_revocable_total not found in map")
+
 			}
 			used, ok := m["master/cpus_revocable_used"]
 			if !ok {
-				log.WithField("Metric", "master/cpus_revocable_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/cpus_revocable_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -53,15 +65,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "gpus", "Current GPU Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/gpus_percent"]
 			if !ok {
-				log.WithField("Metric", "master/gpus_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/gpus_percent not found in map")
+
 			}
 			total, ok := m["master/gpus_total"]
 			if !ok {
-				log.WithField("Metric", "master/gpus_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/gpus_total not found in map")
+
 			}
 			used, ok := m["master/gpus_used"]
 			if !ok {
-				log.WithField("Metric", "master/gpus_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/gpus_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -72,15 +90,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "gpus_revocable", "Current revocable GPU Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/gpus_revocable_percent"]
 			if !ok {
-				log.WithField("Metric", "master/gpus_revocable_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/gpus_revocable_percent not found in map")
+
 			}
 			total, ok := m["master/gpus_revocable_total"]
 			if !ok {
-				log.WithField("Metric", "master/gpus_revocable_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/gpus_revocable_total not found in map")
+
 			}
 			used, ok := m["master/gpus_revocable_used"]
 			if !ok {
-				log.WithField("Metric", "master/gpus_revocable_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/gpus_revocable_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -91,15 +115,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "mem", "Current memory Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/mem_percent"]
 			if !ok {
-				log.WithField("Metric", "master/mem_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/mem_percent not found in map")
+
 			}
 			total, ok := m["master/mem_total"]
 			if !ok {
-				log.WithField("Metric", "master/mem_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/mem_total not found in map")
+
 			}
 			used, ok := m["master/mem_used"]
 			if !ok {
-				log.WithField("Metric", "master/mem_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/mem_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -110,15 +140,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "mem_revocable", "Current revocable memory Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/mem_revocable_percent"]
 			if !ok {
-				log.WithField("Metric", "master/mem_revocable_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/mem_revocable_percent not found in map")
+
 			}
 			total, ok := m["master/mem_revocable_total"]
 			if !ok {
-				log.WithField("Metric", "master/mem_revocable_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/mem_revocable_total not found in map")
+
 			}
 			used, ok := m["master/mem_revocable_used"]
 			if !ok {
-				log.WithField("Metric", "master/mem_revocable_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/mem_revocable_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -129,15 +165,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "disk", "Current disk Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/disk_percent"]
 			if !ok {
-				log.WithField("Metric", "master/disk_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/disk_percent not found in map")
+
 			}
 			total, ok := m["master/disk_total"]
 			if !ok {
-				log.WithField("Metric", "master/disk_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/disk_total not found in map")
+
 			}
 			used, ok := m["master/disk_used"]
 			if !ok {
-				log.WithField("Metric", "master/disk_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/disk_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -148,15 +190,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "disk_revocable", "Current disk Resources in cluster.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			percent, ok := m["master/disk_revocable_percent"]
 			if !ok {
-				log.WithField("Metric", "master/disk_revocable_percent").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/disk_revocable_percent not found in map")
+
 			}
 			total, ok := m["master/disk_revocable_total"]
 			if !ok {
-				log.WithField("Metric", "master/disk_revocable_total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/disk_revocable_total not found in map")
+
 			}
 			used, ok := m["master/disk_revocable_used"]
 			if !ok {
-				log.WithField("Metric", "master/disk_revocable_used").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/disk_revocable_used not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("percent", hostname).Set(percent)
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -173,7 +221,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			elected, ok := m["master/elected"]
 			if !ok {
-				log.WithField("Metric", "master/elected").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/elected not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(elected)
 			return nil
@@ -186,7 +236,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			uptime, ok := m["master/uptime_secs"]
 			if !ok {
-				log.WithField("Metric", "master/uptime_secs").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/uptime_secs not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(uptime)
 			return nil
@@ -195,11 +247,15 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "slave_registration_events_total", "Total number of registration events on this master since it booted.", "event", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			registrations, ok := m["master/slave_registrations"]
 			if !ok {
-				log.WithField("Metric", "master/slave_registrations").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_registrations not found in map")
+
 			}
 			reregistrations, ok := m["master/slave_reregistrations"]
 			if !ok {
-				log.WithField("Metric", "master/slave_reregistrations").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_reregistrations not found in map")
+
 			}
 			c.(*SettableCounterVec).Set(registrations, "register", hostname)
 			c.(*SettableCounterVec).Set(reregistrations, "reregister", hostname)
@@ -209,7 +265,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "recovery_slave_removal_events_total", "Total number of recovery removal events on this master since it booted.", "event", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			removals, ok := m["master/recovery_slave_removals"]
 			if !ok {
-				log.WithField("Metric", "master/recovery_slave_removals").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/recovery_slave_removals not found in map")
+
 			}
 			c.(*SettableCounterVec).Set(removals, "removal", hostname)
 			return nil
@@ -218,19 +276,27 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "slave_removal_events_total", "Total number of removal events on this master since it booted.", "event", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			scheduled, ok := m["master/slave_shutdowns_scheduled"]
 			if !ok {
-				log.WithField("Metric", "master/slave_shutdowns_scheduled").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_shutdowns_scheduled not found in map")
+
 			}
 			canceled, ok := m["master/slave_shutdowns_canceled"]
 			if !ok {
-				log.WithField("Metric", "master/slave_shutdowns_canceled").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_shutdowns_canceled not found in map")
+
 			}
 			completed, ok := m["master/slave_shutdowns_completed"]
 			if !ok {
-				log.WithField("Metric", "master/slave_shutdowns_completed").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_shutdowns_completed not found in map")
+
 			}
 			removals, ok := m["master/slave_removals"]
 			if !ok {
-				log.WithField("Metric", "master/slave_removals").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_removals not found in map")
+
 			}
 			c.(*SettableCounterVec).Set(scheduled, "scheduled", hostname)
 			c.(*SettableCounterVec).Set(canceled, "canceled", hostname)
@@ -263,15 +329,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "slave_unreachable_events_total", "Total number of Slave unreachable events on this master since it booted.", "event", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			canceled, ok := m["master/slave_unreachable_canceled"]
 			if !ok {
-				log.WithField("Metric", "master/slave_unreachable_canceled").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_unreachable_canceled not found in map")
+
 			}
 			completed, ok := m["master/slave_unreachable_completed"]
 			if !ok {
-				log.WithField("Metric", "master/slave_unreachable_completed").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_unreachable_completed not found in map")
+
 			}
 			scheduled, ok := m["master/slave_unreachable_scheduled"]
 			if !ok {
-				log.WithField("Metric", "master/slave_unreachable_scheduled").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slave_unreachable_scheduled not found in map")
+
 			}
 			c.(*SettableCounterVec).Set(canceled, "canceled", hostname)
 			c.(*SettableCounterVec).Set(completed, "completed", hostname)
@@ -282,19 +354,27 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "slaves_state", "Current number of slaves known to the master per connection and registration State.", "State", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			active, ok := m["master/slaves_active"]
 			if !ok {
-				log.WithField("Metric", "master/slaves_active").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slaves_active not found in map")
+
 			}
 			inactive, ok := m["master/slaves_inactive"]
 			if !ok {
-				log.WithField("Metric", "master/slaves_inactive").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slaves_inactive not found in map")
+
 			}
 			disconnected, ok := m["master/slaves_disconnected"]
 			if !ok {
-				log.WithField("Metric", "master/slaves_disconnected").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slaves_disconnected not found in map")
+
 			}
 			unreachable, ok := m["master/slaves_unreachable"]
 			if !ok {
-				log.WithField("Metric", "master/slaves_unreachable").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/slaves_unreachable not found in map")
+
 			}
 
 			// FIXME: Make sure those assumptions are right
@@ -313,15 +393,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "frameworks_state", "Current number of frames known to the master per connection and registration State.", "State", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			active, ok := m["master/frameworks_active"]
 			if !ok {
-				log.WithField("Metric", "master/frameworks_active").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/frameworks_active not found in map")
+
 			}
 			inactive, ok := m["master/frameworks_inactive"]
 			if !ok {
-				log.WithField("Metric", "master/frameworks_inactive").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/frameworks_inactive not found in map")
+
 			}
 			disconnected, ok := m["master/frameworks_disconnected"]
 			if !ok {
-				log.WithField("Metric", "master/frameworks_disconnected").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/frameworks_disconnected not found in map")
+
 			}
 			// FIXME: Make sure those assumptions are right
 			// Every "active" Framework is connected to the master
@@ -341,7 +427,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			offers, ok := m["master/outstanding_offers"]
 			if !ok {
-				log.WithField("Metric", "master/outstanding_offers").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/outstanding_offers not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(offers)
 			return nil
@@ -351,35 +439,51 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "task_states_exit_total", "Total number of tasks processed by exit State.", "State", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			dropped, ok := m["master/tasks_dropped"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_dropped").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_dropped not found in map")
+
 			}
 			errored, ok := m["master/tasks_error"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_error").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_error not found in map")
+
 			}
 			failed, ok := m["master/tasks_failed"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_failed").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_failed not found in map")
+
 			}
 			finished, ok := m["master/tasks_finished"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_finished").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_finished not found in map")
+
 			}
 			gone, ok := m["master/tasks_gone"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_gone").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_gone not found in map")
+
 			}
 			goneByOperator, ok := m["master/tasks_gone_by_operator"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_gone_by_operator").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_gone_by_operator not found in map")
+
 			}
 			killed, ok := m["master/tasks_killed"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_killed").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_killed not found in map")
+
 			}
 			lost, ok := m["master/tasks_lost"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_lost").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_lost not found in map")
+
 			}
 
 			c.(*SettableCounterVec).Set(dropped, "dropped", hostname)
@@ -397,24 +501,34 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "task_states_current", "Current number of tasks by State.", "State", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			running, ok := m["master/tasks_running"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_running").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_running not found in map")
+
 			}
 			staging, ok := m["master/tasks_staging"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_staging").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_staging not found in map")
+
 			}
 			starting, ok := m["master/tasks_starting"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_starting").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_starting not found in map")
+
 			}
 			unreachable, ok := m["master/tasks_unreachable"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_unreachable").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_unreachable not found in map")
+
 			}
 
 			killing, ok := m["master/tasks_killing"]
 			if !ok {
-				log.WithField("Metric", "master/tasks_killing").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/tasks_killing not found in map")
+
 			}
 
 			c.(*prometheus.GaugeVec).WithLabelValues("killing", hostname).Set(killing)
@@ -453,91 +567,135 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "messages", "Number of messages by the master by State", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			droppedMessages, ok := m["master/dropped_messages"]
 			if !ok {
-				log.WithField("Metric", "master/dropped_messages").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/dropped_messages not found in map")
+
 			}
 			authenticateMessages, ok := m["master/messages_authenticate"]
 			if !ok {
-				log.WithField("Metric", "master/messages_authenticate").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_authenticate not found in map")
+
 			}
 			deactivateFrameworkMessages, ok := m["master/messages_deactivate_framework"]
 			if !ok {
-				log.WithField("Metric", "master/messages_deactivate_framework").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_deactivate_framework not found in map")
+
 			}
 			declineOfferMessages, ok := m["master/messages_decline_offers"]
 			if !ok {
-				log.WithField("Metric", "master/messages_decline_offers").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_decline_offers not found in map")
+
 			}
 			executorToFrameworkMessages, ok := m["master/messages_executor_to_framework"]
 			if !ok {
-				log.WithField("Metric", "master/messages_executor_to_framework").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_executor_to_framework not found in map")
+
 			}
 			exitedExecutor, ok := m["master/messages_exited_executor"]
 			if !ok {
-				log.WithField("Metric", "master/messages_exited_executor").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_exited_executor not found in map")
+
 			}
 			frameworkToExecutor, ok := m["master/messages_framework_to_executor"]
 			if !ok {
-				log.WithField("Metric", "master/messages_framework_to_executor").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_framework_to_executor not found in map")
+
 			}
 			killTask, ok := m["master/messages_kill_task"]
 			if !ok {
-				log.WithField("Metric", "master/messages_kill_task").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_kill_task not found in map")
+
 			}
 			launchTasks, ok := m["master/messages_launch_tasks"]
 			if !ok {
-				log.WithField("Metric", "master/messages_launch_tasks").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_launch_tasks not found in map")
+
 			}
 			reconcileTasks, ok := m["master/messages_reconcile_tasks"]
 			if !ok {
-				log.WithField("Metric", "master/messages_reconcile_tasks").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_reconcile_tasks not found in map")
+
 			}
 			registerFramework, ok := m["master/messages_register_framework"]
 			if !ok {
-				log.WithField("Metric", "master/messages_register_framework").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_register_framework not found in map")
+
 			}
 			registerSlave, ok := m["master/messages_register_slave"]
 			if !ok {
-				log.WithField("Metric", "master/messages_register_slave").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_register_slave not found in map")
+
 			}
 			reregisterFramework, ok := m["master/messages_reregister_framework"]
 			if !ok {
-				log.WithField("Metric", "master/messages_reregister_framework").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_reregister_framework not found in map")
+
 			}
 			reregisterSlave, ok := m["master/messages_reregister_slave"]
 			if !ok {
-				log.WithField("Metric", "master/messages_reregister_slave").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_reregister_slave not found in map")
+
 			}
 			resourceRequest, ok := m["master/messages_resource_request"]
 			if !ok {
-				log.WithField("Metric", "master/messages_resource_request").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_resource_request not found in map")
+
 			}
 			reviveOffers, ok := m["master/messages_revive_offers"]
 			if !ok {
-				log.WithField("Metric", "master/messages_revive_offers").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_revive_offers not found in map")
+
 			}
 			statusUpdate, ok := m["master/messages_status_update"]
 			if !ok {
-				log.WithField("Metric", "master/messages_status_update").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_status_update not found in map")
+
 			}
 			statusUpdateAck, ok := m["master/messages_status_update_acknowledgement"]
 			if !ok {
-				log.WithField("Metric", "master/messages_status_update_acknowledgement").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_status_update_acknowledgement not found in map")
+
 			}
 			suppressOffers, ok := m["master/messages_suppress_offers"]
 			if !ok {
-				log.WithField("Metric", "master/messages_suppress_offers").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_suppress_offers not found in map")
+
 			}
 			unregisterFramework, ok := m["master/messages_unregister_framework"]
 			if !ok {
-				log.WithField("Metric", "master/messages_unregister_framework").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_unregister_framework not found in map")
+
 			}
 			unregisterSlave, ok := m["master/messages_unregister_slave"]
 			if !ok {
-				log.WithField("Metric", "master/messages_unregister_slave").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_unregister_slave not found in map")
+
 			}
 			updateSlave, ok := m["master/messages_update_slave"]
 			if !ok {
-				log.WithField("Metric", "master/messages_update_slave").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/messages_update_slave not found in map")
+
 			}
 
 			c.(*SettableCounterVec).Set(authenticateMessages, "authenticate_messages", hostname)
@@ -570,38 +728,54 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 			"source", "destination", "type", "outcome", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			frameworkToExecutorValid, ok := m["master/valid_framework_to_executor_messages"]
 			if !ok {
-				log.WithField("Metric", "master/valid_framework_to_executor_messages").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/valid_framework_to_executor_messages not found in map")
+
 			}
 			frameworkToExecutorInvalid, ok := m["master/invalid_framework_to_executor_messages"]
 			if !ok {
-				log.WithField("Metric", "master/invalid_framework_to_executor_messages").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/invalid_framework_to_executor_messages not found in map")
+
 			}
 			executorToFrameworkValid, ok := m["master/valid_executor_to_framework_messages"]
 			if !ok {
-				log.WithField("Metric", "master/valid_executor_to_framework_messages").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/valid_executor_to_framework_messages not found in map")
+
 			}
 			executorToFrameworkInvalid, ok := m["master/invalid_executor_to_framework_messages"]
 			if !ok {
-				log.WithField("Metric", "master/invalid_executor_to_framework_messages").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/invalid_executor_to_framework_messages not found in map")
+
 			}
 
 			// Status updates are sent from Framework?(FIXME) to Slave
 			// Status update acks are sent from Slave to Framework?
 			statusUpdateAckValid, ok := m["master/valid_status_update_acknowledgements"]
 			if !ok {
-				log.WithField("Metric", "master/valid_status_update_acknowledgements").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/valid_status_update_acknowledgements not found in map")
+
 			}
 			statusUpdateAckInvalid, ok := m["master/invalid_status_update_acknowledgements"]
 			if !ok {
-				log.WithField("Metric", "master/invalid_status_update_acknowledgements").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/invalid_status_update_acknowledgements not found in map")
+
 			}
 			statusUpdateValid, ok := m["master/valid_status_updates"]
 			if !ok {
-				log.WithField("Metric", "master/valid_status_updates").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/valid_status_updates not found in map")
+
 			}
 			statusUpdateInvalid, ok := m["master/invalid_status_updates"]
 			if !ok {
-				log.WithField("Metric", "master/invalid_status_updates").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/invalid_status_updates not found in map")
+
 			}
 			c.(*SettableCounterVec).Set(frameworkToExecutorValid, "Framework", "Executor", "", "valid", hostname)
 			c.(*SettableCounterVec).Set(frameworkToExecutorInvalid, "Framework", "Executor", "", "invalid", hostname)
@@ -620,15 +794,21 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "event_queue_length", "Current number of elements in event queue by type", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			dispatches, ok := m["master/event_queue_dispatches"]
 			if !ok {
-				log.WithField("Metric", "master/event_queue_dispatches").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/event_queue_dispatches not found in map")
+
 			}
 			httpRequests, ok := m["master/event_queue_http_requests"]
 			if !ok {
-				log.WithField("Metric", "master/event_queue_http_requests").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/event_queue_http_requests not found in map")
+
 			}
 			messages, ok := m["master/event_queue_messages"]
 			if !ok {
-				log.WithField("Metric", "master/event_queue_messages").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key master/event_queue_messages not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("message", hostname).Set(messages)
 			c.(*prometheus.GaugeVec).WithLabelValues("http_request", hostname).Set(httpRequests)
@@ -645,7 +825,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			count, ok := m["allocator/event_queue_dispatches"]
 			if !ok {
-				log.WithField("Metric", "allocator/event_queue_dispatches").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/event_queue_dispatches not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(count)
 			return nil
@@ -659,7 +841,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			count, ok := m["allocator/mesos/allocation_runs"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_runs").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_runs not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(count)
 			return nil
@@ -668,39 +852,57 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "allocation_run_ms", "Time spent in allocation algorithm in ms.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			mean, ok := m["allocator/mesos/allocation_run_ms"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms not found in map")
+
 			}
 			min, ok := m["allocator/mesos/allocation_run_ms/min"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/min").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/min not found in map")
+
 			}
 			max, ok := m["allocator/mesos/allocation_run_ms/max"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/max").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/max not found in map")
+
 			}
 			p50, ok := m["allocator/mesos/allocation_run_ms/p50"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/p50").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/p50 not found in map")
+
 			}
 			p90, ok := m["allocator/mesos/allocation_run_ms/p90"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/p90").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/p90 not found in map")
+
 			}
 			p95, ok := m["allocator/mesos/allocation_run_ms/p95"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/p95").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/p95 not found in map")
+
 			}
 			p99, ok := m["allocator/mesos/allocation_run_ms/p99"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/p99").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/p99 not found in map")
+
 			}
 			p999, ok := m["allocator/mesos/allocation_run_ms/p999"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/p999").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/p999 not found in map")
+
 			}
 			p9999, ok := m["allocator/mesos/allocation_run_ms/p9999"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_ms/p9999").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_ms/p9999 not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("mean", hostname).Set(mean)
 			c.(*prometheus.GaugeVec).WithLabelValues("min", hostname).Set(min)
@@ -717,7 +919,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "allocation_runs", "Number of times the allocation alorithm has run", "event", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			runs, ok := m["allocator/mesos/allocation_runs"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_runs").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_runs not found in map")
+
 			}
 			c.(*SettableCounterVec).Set(runs, "allocation", hostname)
 			return nil
@@ -726,7 +930,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		counter("master", "allocation_run_latency_ms_count", "Number of allocation batch latency measurements", "event", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			count, ok := m["allocator/mesos/allocation_run_latency_ms/count"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/count").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/count not found in map")
+
 			}
 			c.(*SettableCounterVec).Set(count, "allocation", hostname)
 			return nil
@@ -735,39 +941,57 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "allocation_run_latency_ms", "Allocation batch latency in ms.", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			mean, ok := m["allocator/mesos/allocation_run_latency_ms"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms not found in map")
+
 			}
 			min, ok := m["allocator/mesos/allocation_run_latency_ms/min"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/min").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/min not found in map")
+
 			}
 			max, ok := m["allocator/mesos/allocation_run_latency_ms/max"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/max").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/max not found in map")
+
 			}
 			p50, ok := m["allocator/mesos/allocation_run_latency_ms/p50"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/p50").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/p50 not found in map")
+
 			}
 			p90, ok := m["allocator/mesos/allocation_run_latency_ms/p90"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/p90").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/p90 not found in map")
+
 			}
 			p95, ok := m["allocator/mesos/allocation_run_latency_ms/p95"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/p95").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/p95 not found in map")
+
 			}
 			p99, ok := m["allocator/mesos/allocation_run_latency_ms/p99"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/p99").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/p99 not found in map")
+
 			}
 			p999, ok := m["allocator/mesos/allocation_run_latency_ms/p999"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/p999").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/p999 not found in map")
+
 			}
 			p9999, ok := m["allocator/mesos/allocation_run_latency_ms/p9999"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/allocation_run_latency_ms/p9999").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/allocation_run_latency_ms/p9999 not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues("mean", hostname).Set(mean)
 			c.(*prometheus.GaugeVec).WithLabelValues("min", hostname).Set(min)
@@ -789,7 +1013,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			count, ok := m["allocator/mesos/event_queue_dispatches"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/event_queue_dispatches").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/event_queue_dispatches not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(count)
 			return nil
@@ -883,11 +1109,15 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "allocator_resources_cpus", "Number of CPUs offered or allocated", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			total, ok := m["allocator/mesos/Resources/cpus/total"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/Resources/cpus/total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/Resources/cpus/total not found in map")
+
 			}
 			offeredOrAllocated, ok := m["allocator/mesos/Resources/cpus/offered_or_allocated"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/Resources/cpus/offered_or_allocated").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/Resources/cpus/offered_or_allocated not found in map")
+
 			}
 
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -898,11 +1128,15 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "allocator_resources_disk", "Allocated or offered disk space in MB", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			total, ok := m["allocator/mesos/Resources/disk/total"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/Resources/disk/total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/Resources/disk/total not found in map")
+
 			}
 			offeredOrAllocated, ok := m["allocator/mesos/Resources/disk/offered_or_allocated"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/Resources/disk/offered_or_allocated").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/Resources/disk/offered_or_allocated not found in map")
+
 			}
 
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -913,11 +1147,15 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		gauge("master", "allocator_resources_mem", "Allocated or offered memory in MB", "type", "hostname"): func(m MetricMap, c prometheus.Collector) error {
 			total, ok := m["allocator/mesos/Resources/mem/total"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/Resources/mem/total").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/Resources/mem/total not found in map")
+
 			}
 			offeredOrAllocated, ok := m["allocator/mesos/Resources/mem/offered_or_allocated"]
 			if !ok {
-				log.WithField("Metric", "allocator/mesos/Resources/mem/offered_or_allocated").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key allocator/mesos/Resources/mem/offered_or_allocated not found in map")
+
 			}
 
 			c.(*prometheus.GaugeVec).WithLabelValues("total", hostname).Set(total)
@@ -1220,7 +1458,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			size, ok := m["registrar/registry_size_bytes"]
 			if !ok {
-				log.WithField("Metric", "registrar/registry_size_bytes").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key registrar/registry_size_bytes not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(size)
 			return nil
@@ -1233,7 +1473,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			ops, ok := m["registrar/queued_operations"]
 			if !ok {
-				log.WithField("Metric", "registrar/queued_operations").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key registrar/queued_operations not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(ops)
 			return nil
@@ -1246,7 +1488,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			ms, ok := m["registrar/state_fetch_ms"]
 			if !ok {
-				log.WithField("Metric", "registrar/state_fetch_ms").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key registrar/state_fetch_ms not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(ms)
 			return nil
@@ -1325,7 +1569,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			recovered, ok := m["registrar/log/recovered"]
 			if !ok {
-				log.WithField("Metric", "registrar/log/recovered").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key registrar/log/recovered not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(recovered)
 			return nil
@@ -1338,7 +1584,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			size, ok := m["registrar/log/ensemble_size"]
 			if !ok {
-				log.WithField("Metric", "registrar/log/ensemble_size").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key registrar/log/ensemble_size not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(size)
 			return nil
@@ -1353,7 +1601,9 @@ func NewMasterCollector(httpClient *HttpClient) prometheus.Collector {
 		}, []string{"hostname"}): func(m MetricMap, c prometheus.Collector) error {
 			recovered, ok := m["overlay/log/recovered"]
 			if !ok {
-				log.WithField("Metric", "overlay/log/recovered").Warn(LogErrNotFoundInMap)
+
+				return fmt.Errorf("key overlay/log/recovered not found in map")
+
 			}
 			c.(*prometheus.GaugeVec).WithLabelValues(hostname).Set(recovered)
 			return nil

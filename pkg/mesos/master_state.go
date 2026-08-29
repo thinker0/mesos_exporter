@@ -234,8 +234,8 @@ func setAttributes(s Slave, normalisedAttributeLabels []string, slaveAttributes 
 
 func (c *MasterCollector) Collect(ch chan<- prometheus.Metric) {
 	var s State
-	log.WithField("Url", "/State").Debug("fetching URL")
-	c.FetchAndDecode("/State", &s)
+	log.WithField("Url", "/state").Debug("fetching URL")
+	c.FetchAndDecode("/state", &s)
 	for c, set := range c.Metrics {
 		set(&s, c)
 		c.Collect(ch)

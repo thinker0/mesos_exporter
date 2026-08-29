@@ -259,6 +259,10 @@ func authToken(httpClient *HttpClient) string {
 }
 
 func (httpClient *HttpClient) FetchAndDecode(endpoint string, target interface{}) bool {
+	return httpClient.fetchAndDecodeInternal(endpoint, target, true)
+}
+
+func (httpClient *HttpClient) fetchAndDecodeInternal(endpoint string, target interface{}, allowFallback bool) bool {
 	url := strings.TrimSuffix(httpClient.Url, "/") + endpoint
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -288,15 +292,46 @@ func (httpClient *HttpClient) FetchAndDecode(endpoint string, target interface{}
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode != http.StatusOK {
+		if allowFallback {
+			fallbackMap := map[string]string{
+				"/state":              "/State",
+				"/slave(1)/state":     "/Slave(1)/State",
+				"/monitor/statistics": "/monitor/Statistics",
+				"/metrics/snapshot":   "/Metrics/snapshot",
+				"/State":              "/state",
+				"/Slave(1)/State":     "/slave(1)/state",
+				"/monitor/Statistics": "/monitor/statistics",
+				"/Metrics/snapshot":   "/metrics/snapshot",
+			}
+			if altEndpoint, ok := fallbackMap[endpoint]; ok {
+				log.WithFields(log.Fields{
+					"original": endpoint,
+					"fallback": altEndpoint,
+					"status":   res.StatusCode,
+				}).Info("Endpoint failed, retrying with fallback endpoint")
+				return httpClient.fetchAndDecodeInternal(altEndpoint, target, false)
+			}
+		}
+		log.WithFields(log.Fields{
+			"Url":    url,
+			"status": res.StatusCode,
+		}).Error("HTTP request failed")
+		ErrorCounter.Inc()
+		return false
+	}
+
 	var reader io.ReadCloser
 	switch res.Header.Get("Content-Encoding") {
 	case "gzip":
-		if reader, err = gzip.NewReader(res.Body); err != nil {
+		var gzipErr error
+		if reader, gzipErr = gzip.NewReader(res.Body); gzipErr != nil {
 			log.WithFields(log.Fields{
 				"Url":   url,
-				"error": err,
-			}).Error("Error fetching URL")
+				"error": gzipErr,
+			}).Error("Error creating gzip reader")
 			ErrorCounter.Inc()
+			return false
 		}
 		defer reader.Close()
 	default:
@@ -316,14 +351,36 @@ func (httpClient *HttpClient) FetchAndDecode(endpoint string, target interface{}
 
 func (c *MetricCollector) Collect(ch chan<- prometheus.Metric) {
 	var m MetricMap
-	log.WithField("Url", "/Metrics/snapshot").Debug("fetching URL")
-	c.FetchAndDecode("/Metrics/snapshot", &m)
+	log.WithField("Url", "/metrics/snapshot").Debug("fetching URL")
+	c.FetchAndDecode("/metrics/snapshot", &m)
+
+	if m != nil {
+		for k, v := range m {
+			if len(k) > 0 {
+				first := k[:1]
+				var toggled string
+				if first == strings.ToUpper(first) {
+					toggled = strings.ToLower(first) + k[1:]
+				} else {
+					toggled = strings.ToUpper(first) + k[1:]
+				}
+				if _, ok := m[toggled]; !ok {
+					m[toggled] = v
+				}
+			}
+		}
+	}
+
 	for cm, f := range c.Metrics {
 		if err := f(m, cm); err != nil {
-			ch := make(chan *prometheus.Desc, 1)
+			if strings.Contains(err.Error(), "not found in map") {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Debug("Metric key not found in map, skipping series")
+				continue
+			}
 			log.WithFields(log.Fields{
-				"Metric": <-ch,
-				"error":  err,
+				"error": err,
 			}).Error("Error extracting Metric")
 			ErrorCounter.Inc()
 			continue
